@@ -57,8 +57,8 @@ app = FastAPI(
 )
 # Mount the whole frontend folder (so assets work if you add any later)
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
-INDEX = Path("frontend/index.html").resolve()
-
+HOME = Path("frontend/home.html").resolve()
+DASH = Path("frontend/dashboard.html").resolve()
 
 @app.on_event("startup")
 def startup_event() -> None:
@@ -71,6 +71,11 @@ def startup_event() -> None:
     """
     Base.metadata.create_all(bind=engine)
 
+@app.get("/app")          # homepage
+def home_page(): return FileResponse(HOME)
+
+@app.get("/api/dashboard")# dashboard
+def dashboard_page(): return FileResponse(DASH)
 
 @app.get("/api/customers", response_model=List[CustomerOut], tags=["Customers"])
 def list_customers(db: Session = Depends(get_db)) -> List[CustomerOut]:

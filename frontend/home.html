@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Customer Health — Home</title>
+<style>
+  :root{
+    /* pastel palette */
+    --cream:#f6f1e7; --rose:#f5c5b7; --mauve:#d7c7df; --sky:#cfe5ef;
+    --ink:#122f2b; --muted:#546361; --border:#e8e4dc;
+    --btn:#123d36; --btnText:#fff; --card:#ffffffd6;
+    --chip:#eef2ff; --chipText:#2d3a66;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, Ubuntu; color:var(--ink);
+    background:
+      radial-gradient(600px 420px at 60% 12%, var(--mauve) 0%, #fff0 60%),
+      radial-gradient(680px 520px at 35% 30%, var(--rose) 0%, #fff0 55%),
+      radial-gradient(700px 540px at 75% 70%, var(--sky) 0%, #fff0 55%),
+      var(--cream);
+  }
+  header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px}
+  nav a{color:var(--muted);text-decoration:none;margin-left:16px}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+
+  /* ===== HERO ===== */
+  .hero{
+    position:relative;
+    padding:10px 6px 0 6px;
+    margin-bottom:12px;
+  }
+  .hero h1{
+    font-family:"Georgia","Times New Roman",serif;
+    font-size:clamp(36px,5.8vw,62px);
+    line-height:1.02; margin:0 0 10px 0;
+    letter-spacing:-0.02em;
+  }
+  .hero p.lead{
+    max-width:900px; color:var(--muted); margin:0;
+    font-size:clamp(16px,2vw,18px);
+  }
+  /* Decorative ribbons behind the hero */
+  .ribbons{
+    position:absolute; inset:-40px -24px auto -24px; height:120px; pointer-events:none; z-index:-1;
+    filter:blur(12px) saturate(1.05);
+    background:
+      linear-gradient(90deg, #ffffff66, #ffffff00 30% 70%, #ffffff66),
+      radial-gradient(70% 160% at 100% -40%, #e6d6ff66 0%, #ffffff00 60%),
+      radial-gradient(70% 140% at 0% 160%, #ffe1d066 0%, #ffffff00 60%);
+    border-radius:20px;
+    border:1px solid #ffffff4a;
+  }
+
+  /* ===== CTA CARD ===== */
+  .cta-card{
+    margin-top:16px; display:inline-flex; gap:12px; align-items:center;
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px 12px;
+    box-shadow:0 6px 24px rgba(18,61,54,.08);
+  }
+  .btn{appearance:none;border:none;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer}
+  .btn.primary{background:var(--btn);color:var(--btnText)}
+  .btn.ghost{background:#fff;border:1px solid var(--border);color:var(--ink)}
+
+  /* ===== STATS STRIP ===== */
+  .stats{
+    display:grid; grid-template-columns:repeat(4, minmax(160px,1fr)); gap:10px;
+    margin-top:18px;
+  }
+  .stat{
+    background:#ffffffb8; border:1px solid var(--border); border-radius:12px; padding:10px 12px;
+    display:grid; gap:2px; box-shadow:0 1px 2px rgba(0,0,0,.03);
+  }
+  .stat .k{font-weight:800; letter-spacing:-0.01em}
+  .stat .s{color:var(--muted); font-size:12px}
+
+  /* ===== FEATURE LIST ===== */
+  .features{
+    margin-top:18px; background:#ffffffc8; border:1px solid var(--border); border-radius:16px; padding:16px;
+  }
+  .features h2{
+    font-family:"Georgia","Times New Roman",serif; font-size:22px; margin:0 0 8px 0;
+  }
+  .flist{display:grid; grid-template-columns:repeat(3,minmax(220px,1fr)); gap:10px}
+  .fitem{display:flex; gap:10px; align-items:flex-start; background:#fff; border:1px solid var(--border);
+         border-radius:12px; padding:10px; box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .badge{min-width:24px;height:24px;border-radius:8px;background:linear-gradient(135deg,#b9dfff,#f2d6ff)}
+  .fitem b{display:block}
+  .fitem span{color:var(--muted); font-size:13px}
+
+  @media (max-width: 980px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .flist{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+  <header class="wrap">
+    <strong>Customer Health</strong>
+    <nav>
+      <a href="/app">Home</a>
+      <a href="/api/dashboard">Dashboard</a>
+      <a href="/docs">API</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="ribbons" aria-hidden="true"></div>
+      <h1>Understand Customer Health at a Glance</h1>
+      <p class="lead">
+        Turn product signals into a clear, explainable score. We look at <b>recent logins</b> and <b>API activity</b> for engagement,
+        <b>key feature coverage</b> for adoption, <b>support tickets</b> for friction, and <b>invoice timeliness</b> for financial reliability.
+        FastAPI computes scores on demand from Postgres, so what you see is real and current.
+      </p>
+
+      <div class="cta-card">
+        <a class="btn primary" href="/api/dashboard">Analyze data</a>
+        <a class="btn ghost" href="https://github.com/yuval-rozen/Auditale-Home-Assignment" target="_blank" rel="noreferrer">View repo</a>
+      </div>
+
+      <!-- quick stats -->
+      <div class="stats">
+        <div class="stat"><div class="k">5 signals</div><div class="s">logins, API, adoption, tickets, invoices</div></div>
+        <div class="stat"><div class="k">On-demand</div><div class="s">computed per request</div></div>
+        <div class="stat"><div class="k">Explainable</div><div class="s">factor breakdown for every customer</div></div>
+        <div class="stat"><div class="k">Postgres + FastAPI</div><div class="s">sane, production-style stack</div></div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+      <h2>Why this approach works</h2>
+      <div class="flist">
+        <div class="fitem">
+          <div class="badge" aria-hidden="true"></div>
+          <div>
+            <b>Behavior-first scoring</b>
+            <span>Signals mirror how real teams judge health: recency, breadth, stability, payments, and momentum.</span>
+          </div>
+        </div>
+        <div class="fitem">
+          <div class="badge" aria-hidden="true"></div>
+          <div>
+            <b>Neutral when data is missing</b>
+            <span>No invoice history? We treat it as neutral, not a penalty—useful for trials and new logos.</span>
+          </div>
+        </div>
+        <div class="fitem">
+          <div class="badge" aria-hidden="true"></div>
+          <div>
+            <b>Simple to extend</b>
+            <span>Add new factors (e.g., NPS, contract term) without changing the dashboard structure.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
