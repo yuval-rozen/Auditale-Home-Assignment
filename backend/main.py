@@ -29,6 +29,9 @@ from datetime import datetime, timedelta
 from typing import List
 
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
@@ -52,6 +55,9 @@ app = FastAPI(
     description="Compute customer health from usage, support, billing, and API trends.",
     version="0.1.0",
 )
+# Mount the whole frontend folder (so assets work if you add any later)
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+INDEX = Path("frontend/index.html").resolve()
 
 
 @app.on_event("startup")
@@ -224,6 +230,9 @@ def add_event(customer_id: int, payload: EventIn, db: Session = Depends(get_db))
 
     return {"id": ev.id, "status": "created"}
 
+@app.get("/api/dashboard")
+async def dashboard():
+    return FileResponse(INDEX)
 
 @app.get("/", tags=["Meta"])
 def root() -> dict:
@@ -231,3 +240,4 @@ def root() -> dict:
     Lightweight service check and human-friendly note.
     """
     return {"message": "Hello from FastAPI"}
+

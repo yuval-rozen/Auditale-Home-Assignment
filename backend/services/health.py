@@ -29,9 +29,9 @@ from typing import Dict, Optional
 WEIGHTS: Dict[str, float] = {
     "loginFrequency":     0.25,  # engagement
     "featureAdoption":    0.25,  # breadth of value
-    "supportLoad":        0.20,  # pain/friction
+    "supportLoad":        0.15,  # pain/friction
     "invoiceTimeliness":  0.20,  # financial reliability
-    "apiTrend":           0.10,  # integration depth / momentum
+    "apiTrend":           0.15,  # integration depth / momentum
 }
 
 # Number of "key features" your product team cares about for adoption.
@@ -55,20 +55,14 @@ def _pct(x: float) -> float:
 # -----------------
 # Factor score rules
 # -----------------
-def score_login_frequency(logins_30d: int, target: int = 20) -> float:
+def score_login_frequency(logins_30d: int, target: int = 16) -> float:
     """
-    Normalize logins in the last 30 days to 0..100 against a target.
-
-    Rationale:
-      - 30 days captures recent engagement.
-      - We cap at 100 so abnormally high activity doesn't skew beyond 'excellent'.
-
-    Example:
-      logins_30d=10, target=20 --> 50.0
-    """
-    if target <= 0:
-        return 100.0  # degenerate: if there's no target, don't penalize
-    return _pct(logins_30d / float(target))
+      Map last-30d login count to 0..100.
+      0 = none; target = 100; above target saturates near 100.
+      """
+    # old default target was 20
+    ratio = logins_30d / max(1, target)
+    return _pct(min(1.0, ratio))
 
 
 def score_feature_adoption(distinct_features_used_90d: int,
@@ -90,22 +84,10 @@ def score_feature_adoption(distinct_features_used_90d: int,
 
 def score_support_load(tickets_90d: int, max_tickets: int = 10) -> float:
     """
-    Fewer tickets over 90 days means less friction -> higher score.
-
-    Formula:
-      score = 1 - min(tickets_90d / max_tickets, 1)
-
-    Notes:
-      - 90 days smooths occasional spikes.
-      - If max_tickets <= 0, return 100 (avoid divide-by-zero, don't penalize).
-      - This can return 100 when there are 0 tickets; that is intentional.
-        If you want to avoid 'free 100s' for completely inactive customers,
-        pass an 'activity' hint into your calling code and downweight this factor
-        when activity is near zero.
+    Fewer tickets → better (inverse). 0 tickets ~100, ≥max_tickets ~0.
     """
-    if max_tickets <= 0:
-        return 100.0
-    return _pct(1.0 - _clamp01(tickets_90d / float(max_tickets)))
+    x = 1.0 - min(1.0, tickets_90d / max_tickets)
+    return _pct(x)
 
 
 def score_invoice_timeliness_counts(on_time_invoices: int,
@@ -141,34 +123,15 @@ def score_invoice_timeliness_ratio(on_time_ratio: float,
     return _pct(on_time_ratio)
 
 
-def score_api_trend(curr_calls_30d: int,
-                    prev_calls_30d: int,
-                    smoothing: int = 5) -> float:
+def score_api_trend(curr_30d: int, prev_30d: int, smoothing: int = 3) -> float:
     """
-    Map the month-over-month API change into 0..100 with 50 as 'no change'.
-
-    Steps:
-      - Compute a smoothed delta: (curr + α - (prev + α)) / (prev + α)
-        where α = `smoothing` (pseudo-count) to reduce volatility when counts are small.
-      - Then map:
-            change <= -100%   ->   0
-            change  =   0%    ->  50
-            change >= +100%   -> 100
-        and linearly in between.
-
-    Examples (with α=5):
-      prev=0, curr=0  -> change≈0.0 -> 50.0 (neutral)
-      prev=0, curr>0  -> positive but not an automatic 100 (thanks to smoothing)
+    50 = flat; >50 up; <50 down. Smoothing dampens noise.
     """
-    denom = float(max(prev_calls_30d + smoothing, 1))
-    change = (curr_calls_30d + smoothing - (prev_calls_30d + smoothing)) / denom
-
-    # Hard-cap at [-1, +1] then map to [0, 100] with 50 neutral.
-    if change <= -1.0:
-        return 0.0
-    if change >= 1.0:
-        return 100.0
-    return (change + 1.0) * 50.0
+    num = curr_30d + smoothing
+    den = max(1, prev_30d + smoothing)
+    ratio = num / den
+    # ratio=1 → 50, ratio=2 → ~75, ratio=0.5 → ~25
+    return round(50.0 + 50.0 * (ratio - 1.0) / (ratio + 1.0), 2)
 
 
 # -----------------

@@ -25,14 +25,14 @@ from pathlib import Path
 from typing import List, Optional
 
 # --- Add backend/ to sys.path so we can import your models & DB session ---
+from pathlib import Path
 import sys
-ROOT = Path(__file__).resolve().parents[1]
-BACKEND_DIR = ROOT / "backend"
-sys.path.append(str(BACKEND_DIR))
 
-# Now we can import your app's DB + models
-from db import Base, engine, SessionLocal  # type: ignore
-from models import (  # type: ignore
+ROOT = Path(__file__).resolve().parents[1]   # project root
+sys.path.insert(0, str(ROOT))                # make 'backend' importable as a package
+
+from backend.db import Base, engine, SessionLocal
+from backend.models import (
     Customer,
     Event,
     Invoice,
@@ -64,8 +64,8 @@ SEGMENTS = ["enterprise", "SMB", "startup"]
 FEATURES = ["Billing", "Analytics", "Automation", "Integrations", "Collaboration"]
 
 # You can tune these to bias how "active" seeded customers are.
-P_LOGIN_BASE_PER_30D = (2, 30)     # logins per 30 days: random.randint(2, 30)
-P_API_BASE_PER_30D   = (20, 400)   # api calls per 30 days
+P_LOGIN_BASE_PER_30D = (0, 30)     # logins per 30 days: random.randint(2, 30)
+P_API_BASE_PER_30D   = (20, 500)   # api calls per 30 days
 P_FEATURES_USED      = (0, 5)      # distinct features in last 90 days
 P_TICKETS_PER_90D    = (0, 10)     # tickets opened last 90 days
 INVOICE_MONTHS       = 3           # create 3 monthly invoices
@@ -228,24 +228,43 @@ def seed_support_tickets(session, customer_id: int) -> None:
 
 def seed_invoices(session, customer_id: int) -> None:
     """
-    Invoice timeliness -> % invoices paid on/before due_date.
-    We create up to 3 monthly invoices with a mix of on-time and late payments.
+    Seed invoice history for a customer (realistic but backend-aligned).
+
+    Behavior:
+      - Generate up to `INVOICE_MONTHS` past months (default: 3).
+      - For each month, there's an 85% chance the customer actually has an invoice
+        (some are new/free-trial → gaps are realistic).
+      - ~10% of customers behave like "chronic late payers" for this run.
+        * Chronic late payers are late ~80% of the time.
+        * Others pay on time ~85% of the time.
+      - Amounts vary between $200 and $3000.
+
+    IMPORTANT ALIGNMENT:
+      - "On-time" here means paid_date <= due_date (no grace),
+        matching the backend health logic that counts on-time using:
+          paid_date <= due_date
     """
     now = datetime.utcnow()
     rows: List[Invoice] = []
 
+    # Decide once per customer if they behave like a chronic late payer
+    late_payer = random.random() < 0.10  # ~10%
+
     for m in range(INVOICE_MONTHS):
-        # due on the 1st of each month going backwards (e.g., this month, last month, etc.)
+        # Due on the 1st of each month going backwards (this month, last month, etc.)
         due = datetime(now.year, now.month, 1) - timedelta(days=30 * m)
         amount = round(random.uniform(200, 3000), 2)
 
-        # 70% chance the invoice exists (some customers might be free trial/no invoices yet)
-        if random.random() < 0.7:
-            # 75% on-time, 25% late (tune this to taste)
-            if random.random() < 0.75:
-                paid = due + timedelta(days=random.randint(0, 5))  # on-time or slightly after
+        # 90% chance this month actually has an invoice
+        if random.random() < 0.9:
+            ontime_prob = 0.20 if late_payer else 0.9
+
+            if random.random() < ontime_prob:
+                # On-time: paid on/before due_date (allow a bit early)
+                paid = due - timedelta(days=random.randint(0, 2))  # 0 = same day
             else:
-                paid = due + timedelta(days=random.randint(6, 25))  # late
+                # Late: strictly AFTER due_date
+                paid = due + timedelta(days=random.randint(1, 25))
 
             rows.append(Invoice(
                 customer_id=customer_id,

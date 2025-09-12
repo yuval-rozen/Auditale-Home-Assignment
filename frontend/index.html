@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Customer Health Dashboard</title>
+  <style>
+    :root { --ok:#2e7d32; --warn:#ed6c02; --bad:#c62828; --chip-bg:#eef2f7; --muted:#6b7280; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 0; background: #f7f8fb; color: #0f172a; }
+    header { padding: 16px 24px; background: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
+    header h1 { margin: 0; font-size: 18px; }
+    main { display: grid; grid-template-columns: 1fr 420px; gap: 16px; padding: 16px; }
+    .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .card h2 { margin: 0; padding: 14px 16px; font-size: 16px; border-bottom: 1px solid #e5e7eb; }
+    .card .content { padding: 12px 16px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th { text-align: left; font-size: 12px; color: #6b7280; font-weight: 600; padding: 8px 6px; border-bottom: 1px solid #e5e7eb; }
+    tbody td { padding: 10px 6px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    tbody tr { cursor: pointer; }
+    tbody tr:hover { background: #f8fafc; }
+
+    .chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--chip-bg); }
+    .chip.ok { color: var(--ok); }
+    .chip.warn { color: var(--warn); }
+    .chip.bad { color: var(--bad); }
+
+    .muted { color: var(--muted); }
+    .row { display: flex; gap: 10px; align-items: baseline; }
+    .bar { height: 10px; background: #e5e7eb; border-radius: 8px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #2563eb; }
+    .kv { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 14px; }
+    .pill { background: #eef2ff; color: #3730a3; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid #e0e7ff; }
+    .small { font-size: 12px; }
+    .scroll { max-height: 60vh; overflow: auto; }
+
+    @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Customer Health Dashboard</h1>
+    <div class="small muted">Backed by /api/customers and /api/customers/{id}/health</div>
+  </header>
+  <main>
+    <section class="card">
+      <h2>Customers</h2>
+      <div class="content scroll">
+        <table id="customers-table" aria-describedby="customer list">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Segment</th>
+              <th>Health</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="customers-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="card" id="detail-card" hidden>
+      <h2 id="detail-title">Health Detail</h2>
+      <div class="content">
+        <div class="row" style="justify-content: space-between; align-items:center;">
+          <div class="muted">Customer</div>
+          <div class="pill" id="detail-segment">—</div>
+        </div>
+        <div class="row" style="justify-content: space-between; margin-top:6px;">
+          <div class="muted">Health Score</div>
+          <div id="detail-score" class="chip">—</div>
+        </div>
+
+        <h3 class="small" style="margin-top:16px;">Factors</h3>
+        <div id="factors"></div>
+
+        <h3 class="small" style="margin-top:16px;">Recent Events (if available)</h3>
+        <div id="events" class="small muted">—</div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const apiBase = location.origin; // same origin; if different, change here
+
+    function statusFromScore(s) {
+      if (s >= 70) return { label: 'Healthy', cls: 'ok' };
+      if (s >= 50) return { label: 'At-risk', cls: 'warn' };
+      return { label: 'Churn-risk', cls: 'bad' };
+    }
+
+    function percent(n) { return Math.max(0, Math.min(100, Math.round(n))) }
+
+    function renderRow(c) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${c.name ?? '—'}</td>
+        <td><span class="pill">${c.segment ?? '—'}</span></td>
+        <td class="health" data-id="${c.id}">—</td>
+        <td><span class="chip" id="status-${c.id}">—</span></td>
+        `;
+      tr.addEventListener('click', () => loadDetail(c));
+      return tr;
+    }
+
+    async function fetchJSON(url, opts) {
+      const res = await fetch(url, opts);
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    async function loadCustomers() {
+        const tbody = document.getElementById('customers-body');
+        tbody.innerHTML = '<tr><td colspan="4" class="muted">Loading…</td></tr>';
+        try {
+            const list = await fetchJSON(`${apiBase}/api/customers`);
+            tbody.innerHTML = '';
+            list.forEach(c => tbody.appendChild(renderRow(c)));
+
+            // Hydrate rows with computed health
+            await Promise.all(list.map(async (c) => {
+                try {
+                    const detail = await fetchJSON(`${apiBase}/api/customers/${c.id}/health`);
+                    const score = detail.healthScore ?? detail.health_score ?? 0;
+
+                    // Fill the Health cell
+                    const cell = tbody.querySelector(`td.health[data-id="${c.id}"]`);
+                    if (cell) cell.textContent = percent(score);
+
+                    // Fill the Status chip
+                    const chip = document.getElementById(`status-${c.id}`);
+                    if (chip) {
+                        const { label, cls } = statusFromScore(score);
+                        chip.textContent = label;
+                        chip.className = `chip ${cls}`;
+                    }   
+                } catch {
+                    // Leave placeholders if health fetch fails for this row
+                }
+            }));
+        } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="4" class="muted">Failed to load: ${e.message}</td></tr>`;
+        }
+    }
+
+    function factorBar(name, value) {
+      const v = percent(value);
+      const wrap = document.createElement('div');
+      wrap.style.marginTop = '10px';
+      wrap.innerHTML = `
+        <div class="row" style="justify-content: space-between;">
+          <div>${name}</div>
+          <div class="muted">${v}</div>
+        </div>
+        <div class="bar"><span style="width:${v}%"></span></div>
+      `;
+      return wrap;
+    }
+
+    async function loadDetail(cust) {
+      const card = document.getElementById('detail-card');
+      card.hidden = false;
+      document.getElementById('detail-title').textContent = `Health Detail — ${cust.name}`;
+      document.getElementById('detail-segment').textContent = cust.segment ?? '—';
+
+      const scoreChip = document.getElementById('detail-score');
+      scoreChip.textContent = typeof cust.healthScore === 'number' ? percent(cust.healthScore) : '—';
+      const { cls } = statusFromScore(cust.healthScore||0);
+      scoreChip.className = `chip ${cls}`;
+
+      const factors = document.getElementById('factors');
+      factors.innerHTML = '<div class="muted small">Loading…</div>';
+      try {
+        const detail = await fetchJSON(`${apiBase}/api/customers/${cust.id}/health`);
+        const score = detail.healthScore ?? detail.health_score ?? 0;
+        scoreChip.textContent = percent(score);
+        scoreChip.className = `chip ${statusFromScore(score).cls}`;
+        // Expecting a structure like: { score, factors: { loginFrequency, featureAdoption, supportLoad, invoiceTimeliness, apiTrend } }
+        factors.innerHTML = '';
+        const keys = Object.keys(detail.factors || {});
+        if (!keys.length) factors.innerHTML = '<div class="muted small">No factor breakdown returned.</div>';
+        keys.forEach(k => {
+          const nice = k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+          factors.appendChild(factorBar(nice, detail.factors[k]));
+        });
+      } catch (e) {
+        factors.innerHTML = `<div class="muted small">Failed to load breakdown: ${e.message}</div>`;
+      }
+
+      // Optional: try to load recent events if your API exposes a GET (gracefully degrade if not)
+      const eventsEl = document.getElementById('events');
+      eventsEl.textContent = '—';
+      try {
+        const res = await fetch(`${apiBase}/api/customers/${cust.id}/events?limit=10`);
+        if (res.ok) {
+          const items = await res.json();
+          if (Array.isArray(items) && items.length) {
+            eventsEl.classList.remove('muted');
+            eventsEl.innerHTML = items.map(ev => {
+              const t = ev.type || ev.event_type || 'event';
+              const ts = ev.timestamp || ev.created_at || ev.occurred_at || '';
+              return `<div>• <strong>${t}</strong> <span class="muted small">${ts}</span></div>`;
+            }).join('');
+          } else {
+            eventsEl.textContent = 'No recent events.';
+          }
+        } else {
+          eventsEl.textContent = 'Events endpoint not available.';
+        }
+      } catch {}
+    }
+
+    loadCustomers();
+  </script>
+</body>
+</html>
