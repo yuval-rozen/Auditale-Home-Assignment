@@ -32,15 +32,15 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
-from db import Base, engine, get_db
-from models import Customer, Event, Invoice, SupportTicket, FeatureUsage
-from schemas import CustomerOut, HealthOut, EventIn
-from services.health import (
+from .db import Base, engine, get_db
+from .models import Customer, Event, Invoice, SupportTicket, FeatureUsage
+from .schemas import CustomerOut, HealthOut, EventIn
+from .services.health import (
     WEIGHTS,
     score_login_frequency,
     score_feature_adoption,
     score_support_load,
-    score_invoice_timeliness_counts,  # counts-based -> supports "no history" neutrality
+    score_invoice_timeliness_counts,
     score_api_trend,
     weighted_score,
     TOTAL_KEY_FEATURES,
