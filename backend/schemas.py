@@ -7,9 +7,7 @@ class CustomerOut(BaseModel):
     name: str
     segment: str
     health_score: float
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class HealthOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

@@ -8,6 +8,7 @@ What these tests verify (end-to-end-ish):
 - The app's dependency override correctly routes DB access to the test Session.
 - Health calculation pulls from multiple tables and stays within [0..100].
 - Posting new events changes health input data (behavioral change over time).
+- Proper error handling for critical paths: 404 on missing customer, 422 on bad payload.
 
 Notes:
 - The database and app wiring for tests are configured in `tests/conftest.py`.
@@ -15,9 +16,6 @@ Notes:
 """
 
 from datetime import datetime, timedelta
-
-# SQLAlchemy imports here are only needed for arranging test data directly in the DB
-from sqlalchemy import select, func  # noqa: F401 (imported for potential future assertions)
 
 # ORM models: used to insert domain rows the API will later read
 from backend.models import Customer, Event, Invoice, SupportTicket, FeatureUsage
@@ -34,7 +32,7 @@ def test_get_customers_list(client, db_session):
     Flow:
     1) Arrange: Insert one Customer directly via the SQLAlchemy session.
     2) Act:     Call the endpoint.
-    3) Assert:  Response is 200, JSON is a list, and includes our inserted name.
+    3) Assert:  Response is 200, JSON is a list, and includes our inserted name/id.
     """
     # Arrange
     c = Customer(name="TestCo", segment="SMB", health_score=0.0)
@@ -48,7 +46,7 @@ def test_get_customers_list(client, db_session):
 
     # Assert
     assert isinstance(data, list)
-    assert any(row["name"] == "TestCo" for row in data)
+    assert any(row["name"] == "TestCo" and row["id"] == c.id for row in data)
 
 
 def test_get_customer_health_breakdown(client, db_session):
@@ -63,7 +61,7 @@ def test_get_customer_health_breakdown(client, db_session):
 
     Scenario:
     - Create a customer with:
-      * 3 logins in the last 30 days       -> engagement signal
+      * 3 logins in the last 30 days        -> engagement signal
       * 2 distinct features in last 90 days -> adoption breadth
       * 2 invoices, both on time            -> billing reliability
       * 1 support ticket in last 90 days    -> moderate friction
@@ -86,12 +84,10 @@ def test_get_customer_health_breakdown(client, db_session):
     db_session.add(FeatureUsage(customer_id=c.id, feature_name="Analytics",  used_at=now - timedelta(days=10)))
     db_session.add(FeatureUsage(customer_id=c.id, feature_name="Automation", used_at=now - timedelta(days=5)))
 
-    # Two invoices; both paid on/before due date -> strong timeliness
+    # Two invoices; both paid on/before due date -> strong timeliness (clarified: no unused vars)
     due1 = now - timedelta(days=20)
-    db_session.add(Invoice(customer_id=c.id, due_date=due1, paid_date=due1, amount=100.0))
-
     due2 = now - timedelta(days=50)
-    paid2 = now - timedelta(days=40)  # still on time if <= due2 (here it's *after* due2, but adjust to your model)
+    db_session.add(Invoice(customer_id=c.id, due_date=due1, paid_date=due1, amount=100.0))
     db_session.add(Invoice(customer_id=c.id, due_date=due2, paid_date=due2, amount=120.0))
 
     # One support ticket in the last 90 days
@@ -141,9 +137,8 @@ def test_post_event_increases_login_score(client, db_session):
     assert r1.status_code == 200
     before = r1.json()["factors"]["loginFrequency"]
 
-    # Act: add a login event (timestamp omitted -> treated as 'now')
-    payload = {"type": "login", "timestamp": None, "meta": {}}
-    r2 = client.post(f"/api/customers/{c.id}/events", json=payload)
+    # Act: add a login event (minimal valid payload)
+    r2 = client.post(f"/api/customers/{c.id}/events", json={"type": "login"})
     assert r2.status_code == 201
 
     # Recompute health after ingesting the event
@@ -152,6 +147,7 @@ def test_post_event_increases_login_score(client, db_session):
 
     # Assert
     assert after >= before, "loginFrequency should not decrease after posting a login event"
+
 
 def test_health_not_found_returns_404(client):
     """
@@ -173,3 +169,32 @@ def test_health_not_found_returns_404(client):
     assert body.get("detail") == "Customer not found"
 
 
+def test_post_event_validation_and_missing_customer_errors(client, db_session):
+    """
+    Negative scenarios covering proper error handling:
+
+    1) 404 Not Found when posting an event to a non-existent customer.
+       - Ensures we don't silently create or ignore invalid IDs.
+
+    2) 422 Unprocessable Entity when the JSON payload doesn't satisfy EventIn
+       (e.g., missing required 'type').
+       - Ensures request validation is enforced by FastAPI/Pydantic.
+
+    Flow:
+    - POST to a bogus customer id -> expect 404.
+    - Create a real customer, POST with missing 'type' -> expect 422.
+    """
+    # (1) 404 on unknown customer
+    res = client.post("/api/customers/424242/events", json={"type": "login"})
+    assert res.status_code == 404
+
+    # (2) 422 on bad payload for an existing customer (missing required 'type')
+    c = Customer(name="BadPayloadCo", segment="SMB", health_score=0.0)
+    db_session.add(c)
+    db_session.commit()
+
+    res2 = client.post(
+        f"/api/customers/{c.id}/events",
+        json={"timestamp": datetime.utcnow().isoformat()}  # missing 'type'
+    )
+    assert res2.status_code == 422

@@ -60,3 +60,16 @@ def weighted_score(factors_0_100: Dict[str, float]) -> float:
     for name, w in WEIGHTS.items():
         total += w * factors_0_100.get(name, 0.0)
     return round(total, 2)
+
+def score_invoice_timeliness_ratio(ratio: float, treat_zero_as_neutral: bool = False) -> float:
+    """
+    Convenience scorer when you only have an on-time ratio in [0..1].
+    - If treat_zero_as_neutral is True and ratio == 0.0, return 50 (no billing history / unknown).
+    - Otherwise, clamp to [0..1] and map to 0..100.
+    """
+    if ratio is None:
+        return 50.0
+    if treat_zero_as_neutral and ratio == 0.0:
+        return 50.0
+    # assuming you already have _pct(x) that maps [0..1] -> [0..100] with clamping
+    return _pct(max(0.0, min(1.0, float(ratio))))

@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "test": "docker compose run --build --rm --entrypoint '' backend pytest"
+  }
+}

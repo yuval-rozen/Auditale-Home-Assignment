@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+set -e
+
+# If a command was provided (e.g., "pytest"), run it and exit (used by `npm test`)
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+fi
+
 set -euo pipefail
 
 echo "Waiting for Postgres to accept TCP connections..."
