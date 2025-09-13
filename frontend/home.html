@@ -1,162 +1,382 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Customer Health — Home</title>
-<style>
-  :root{
-    /* pastel palette */
-    --cream:#f6f1e7; --rose:#f5c5b7; --mauve:#d7c7df; --sky:#cfe5ef;
-    --ink:#122f2b; --muted:#546361; --border:#e8e4dc;
-    --btn:#123d36; --btnText:#fff; --card:#ffffffd6;
-    --chip:#eef2ff; --chipText:#2d3a66;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; font-family:Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, Ubuntu; color:var(--ink);
-    background:
-      radial-gradient(600px 420px at 60% 12%, var(--mauve) 0%, #fff0 60%),
-      radial-gradient(680px 520px at 35% 30%, var(--rose) 0%, #fff0 55%),
-      radial-gradient(700px 540px at 75% 70%, var(--sky) 0%, #fff0 55%),
-      var(--cream);
-  }
-  header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px}
-  nav a{color:var(--muted);text-decoration:none;margin-left:16px}
-  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  <!-- Customer Health — cleaned & pastel: single links, minimal CTAs, professional UI -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Customer Health App — Home</title>
+  <meta name="description" content="Turn product signals into an explainable customer health score. Clean, modern UI with clear value props." />
+  <meta name="theme-color" content="#0f3e36" />
+  <meta name="color-scheme" content="light only" />
 
-  /* ===== HERO ===== */
-  .hero{
-    position:relative;
-    padding:10px 6px 0 6px;
-    margin-bottom:12px;
-  }
-  .hero h1{
-    font-family:"Georgia","Times New Roman",serif;
-    font-size:clamp(36px,5.8vw,62px);
-    line-height:1.02; margin:0 0 10px 0;
-    letter-spacing:-0.02em;
-  }
-  .hero p.lead{
-    max-width:900px; color:var(--muted); margin:0;
-    font-size:clamp(16px,2vw,18px);
-  }
-  /* Decorative ribbons behind the hero */
-  .ribbons{
-    position:absolute; inset:-40px -24px auto -24px; height:120px; pointer-events:none; z-index:-1;
-    filter:blur(12px) saturate(1.05);
-    background:
-      linear-gradient(90deg, #ffffff66, #ffffff00 30% 70%, #ffffff66),
-      radial-gradient(70% 160% at 100% -40%, #e6d6ff66 0%, #ffffff00 60%),
-      radial-gradient(70% 140% at 0% 160%, #ffe1d066 0%, #ffffff00 60%);
-    border-radius:20px;
-    border:1px solid #ffffff4a;
-  }
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Customer Health App — Home" />
+  <meta property="og:description" content="Understand customer health at a glance. Modern, explainable scoring with real-time insights." />
+  <meta property="og:url" content="/home.html" />
+  <meta name="twitter:card" content="summary_large_image" />
 
-  /* ===== CTA CARD ===== */
-  .cta-card{
-    margin-top:16px; display:inline-flex; gap:12px; align-items:center;
-    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px 12px;
-    box-shadow:0 6px 24px rgba(18,61,54,.08);
-  }
-  .btn{appearance:none;border:none;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer}
-  .btn.primary{background:var(--btn);color:var(--btnText)}
-  .btn.ghost{background:#fff;border:1px solid var(--border);color:var(--ink)}
+  <style>
+    /* =========================
+       Design System (Pastel)
+       ========================= */
+    :root{
+      /* Background stays as your current cream; accents move from blue -> soft pastels */
+      --bg:#f6f1e7;                  /* cream (keep) */
+      --ink:#12312c;                 /* deep ink */
+      --muted:#5a6866;               /* muted ink */
+      --surface:#ffffff;             /* card surface */
+      --surface-soft:#ffffffd9;      /* translucent card */
+      --border:#e9e4da;
 
-  /* ===== STATS STRIP ===== */
-  .stats{
-    display:grid; grid-template-columns:repeat(4, minmax(160px,1fr)); gap:10px;
-    margin-top:18px;
-  }
-  .stat{
-    background:#ffffffb8; border:1px solid var(--border); border-radius:12px; padding:10px 12px;
-    display:grid; gap:2px; box-shadow:0 1px 2px rgba(0,0,0,.03);
-  }
-  .stat .k{font-weight:800; letter-spacing:-0.01em}
-  .stat .s{color:var(--muted); font-size:12px}
+      /* Pastel accents (no harsh blues) */
+      --brand:#0f3e36;               /* deep eucalyptus (for text/active) */
+      --brand-soft:#dfeee9;          /* pastel mint background */
+      --accent1:#f6d6cf;             /* peach tint */
+      --accent2:#e4d9f1;             /* lavender tint */
+      --accent3:#d6ecf1;             /* powder cyan tint (subtle) */
 
-  /* ===== FEATURE LIST ===== */
-  .features{
-    margin-top:18px; background:#ffffffc8; border:1px solid var(--border); border-radius:16px; padding:16px;
-  }
-  .features h2{
-    font-family:"Georgia","Times New Roman",serif; font-size:22px; margin:0 0 8px 0;
-  }
-  .flist{display:grid; grid-template-columns:repeat(3,minmax(220px,1fr)); gap:10px}
-  .fitem{display:flex; gap:10px; align-items:flex-start; background:#fff; border:1px solid var(--border);
-         border-radius:12px; padding:10px; box-shadow:0 1px 2px rgba(0,0,0,.03)}
-  .badge{min-width:24px;height:24px;border-radius:8px;background:linear-gradient(135deg,#b9dfff,#f2d6ff)}
-  .fitem b{display:block}
-  .fitem span{color:var(--muted); font-size:13px}
+      --ok:#2c7a66;                  /* status green (icons) */
+      --warn:#e7a437;                /* status amber */
+      --bad:#cb3b3b;                 /* status red */
 
-  @media (max-width: 980px){
-    .stats{grid-template-columns:repeat(2,1fr)}
-    .flist{grid-template-columns:1fr}
-  }
-</style>
+      --radius:12px; --radius-lg:18px;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:0 10px 32px rgba(18,49,44,.12);
+      --ring:0 0 0 3px rgba(15,62,54,.25);
+
+      --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+      --space-5:20px; --space-6:24px; --space-7:32px; --space-8:40px; --space-9:56px;
+
+      --maxw:1120px;
+    }
+
+    /* Reset-ish */
+    *,*::before,*::after{box-sizing:border-box}
+    html:focus-within{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:-apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, ui-sans-serif, system-ui;
+      color:var(--ink);
+      background:var(--bg);
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+      line-height:1.5;
+    }
+    img{max-width:100%; height:auto; display:block}
+    a{color:var(--brand); text-decoration:none}
+    a:hover{text-decoration:underline}
+    :focus-visible{outline:none; box-shadow:var(--ring)}
+    .wrap{max-width:var(--maxw); margin:0 auto; padding:0 var(--space-4)}
+    .muted{color:var(--muted)}
+
+    /* =========================
+       Header (brand left, nav right)
+       ========================= */
+    header{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter:saturate(1.05) blur(6px);
+      background:color-mix(in oklab, var(--bg) 88%, white);
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .nav{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:var(--space-3) 0;
+    }
+    .brand{display:flex; align-items:center; gap:var(--space-3); font-weight:800; letter-spacing:-.01em}
+    .brand-mark{
+      inline-size:36px; block-size:36px; border-radius:10px;
+      display:grid; place-items:center; box-shadow:var(--shadow-sm);
+      background:linear-gradient(135deg,#f6ebff,#fff1ea 60%, #e9f7f2);
+      border:1px solid #ffffff7a;
+    }
+    .brand-mark svg{width:18px;height:18px}
+    .main-nav{display:flex; gap:var(--space-7)}
+    .main-nav a{
+      color:var(--muted); font-weight:600; padding:8px 12px; border-radius:8px;
+      transition:background .2s ease, color .2s ease;
+    }
+    .main-nav a:hover{color:var(--ink); background:var(--brand-soft)}
+    .main-nav a[aria-current="page"]{color:var(--ink); background:color-mix(in oklab, var(--brand-soft) 75%, white)}
+
+    /* =========================
+       Hero
+       ========================= */
+    .hero{
+      position:relative; overflow:hidden; border-bottom:1px solid rgba(0,0,0,.05);
+      background:
+        radial-gradient(1200px 700px at 15% 15%, var(--accent2) 0%, transparent 55%),
+        radial-gradient(1200px 700px at 85% 20%, var(--accent1) 0%, transparent 55%),
+        radial-gradient(1200px 700px at 50% 95%, var(--accent3) 0%, transparent 55%),
+        var(--bg);
+    }
+    .hero-art{
+      position:absolute; inset:0; pointer-events:none; z-index:-1;
+      opacity:.7; mix-blend:multiply;
+    }
+    .hero-art img{
+      position:absolute; inset:auto; left:0; right:0; top:0; bottom:0; margin:auto;
+      width:min(1200px, 96%); filter:blur(.3px) saturate(105%);
+    }
+    .hero-inner{padding:min(9vw,var(--space-9)) 0; display:grid; gap:var(--space-5)}
+    .hero h1{
+      margin:0; font-size:clamp(32px, 5.5vw, 56px); line-height:1.06; letter-spacing:-.02em;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    .lead{max-width:900px; color:var(--muted); font-size:clamp(16px, 2vw, 18px); margin:0 0 24px 0;}
+    .hero-cta{
+        display:flex;
+        justify-content:center;
+        gap:20px;
+    }
+    .btn{
+      appearance:none; border:1px solid var(--border); background:var(--surface);
+      color:var(--ink); font-weight:700; border-radius:12px; padding:10px 14px; cursor:pointer;
+      box-shadow:var(--shadow-sm); transition:transform .18s ease, background .2s ease;
+    }
+    .btn.primary{
+      /* pastel fill instead of blue */
+      background:var(--brand-soft); color:var(--ink); border-color:color-mix(in oklab, var(--brand-soft) 60%, var(--border));
+    }
+    .btn.primary:hover{transform:translateY(-1px); background:color-mix(in oklab, var(--brand-soft) 80%, white)}
+    .btn:active{transform:translateY(0)}
+
+    /* =========================
+       Feature cards (cleaner, fewer)
+       ========================= */
+    .section{padding:var(--space-4) 0}
+    .section h2{
+      margin:0 0 var(--space-5) 0; font-size:clamp(22px, 3vw, 28px);
+      letter-spacing:-.01em; font-family: Georgia, "Times New Roman", serif;
+    }
+    .features{display:grid; grid-template-columns:repeat(3, minmax(240px,1fr)); gap:var(--space-4)}
+    .card{
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:var(--space-5); box-shadow:var(--shadow-sm);
+    }
+    .icon{
+      inline-size:32px; block-size:32px; border-radius:10px; display:grid; place-items:center;
+      background:var(--brand-soft); margin-bottom:var(--space-3);
+    }
+    .card h3{margin:.25rem 0 .25rem 0; font-size:18px}
+    .card p{margin:0; color:var(--muted); font-size:14px}
+
+    /* KPIs (tidy strip) */
+    .kpis{display:grid; grid-template-columns:repeat(4, minmax(160px,1fr)); gap:var(--space-4)}
+    .kpi{
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:var(--space-5); text-align:center; box-shadow:var(--shadow-sm);
+    }
+    .kpi .big{font-weight:800; font-size:clamp(20px, 3vw, 26px); letter-spacing:-.01em}
+    .kpi .sub{color:var(--muted); font-size:13px}
+
+    /* How it works (3 steps) */
+    .steps{display:grid; grid-template-columns:repeat(3, minmax(220px,1fr)); gap:var(--space-4)}
+    .step{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:var(--space-5)}
+    .num{inline-size:28px; block-size:28px; border-radius:8px; display:grid; place-items:center; background:var(--brand-soft); font-weight:800; margin-bottom:var(--space-3)}
+    .step p{margin:.25rem 0 0 0; color:var(--muted); font-size:14px}
+
+    /* FAQ (accordion) */
+    .faq{display:grid; gap:var(--space-3)}
+    details{
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:var(--space-4); box-shadow:var(--shadow-sm);
+    }
+    summary{
+      list-style:none; cursor:pointer; display:flex; align-items:center; gap:var(--space-3); font-weight:700;
+    }
+    summary::-webkit-details-marker{display:none}
+    .chev{transition:transform .2s ease}
+    details[open] .chev{transform:rotate(90deg)}
+    details p{margin:.5rem 0 0 32px; color:var(--muted)}
+
+    /* Footer */
+    footer{margin-top:var(--space-8); padding:var(--space-7) 0 var(--space-8); border-top:1px solid rgba(0,0,0,.06); color:var(--muted)}
+    .foot{display:flex; align-items:center; justify-content:space-between; gap:var(--space-4); flex-wrap:wrap}
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .features{grid-template-columns:1fr}
+      .kpis{grid-template-columns:repeat(2,1fr)}
+      .steps{grid-template-columns:1fr}
+      .main-nav{gap:var(--space-4)}
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    }
+  </style>
 </head>
 <body>
-  <header class="wrap">
-    <strong>Customer Health</strong>
-    <nav>
-      <a href="/app">Home</a>
-      <a href="/api/dashboard">Dashboard</a>
-      <a href="/docs">API</a>
-    </nav>
+  <!-- =========================
+       Header: logo left, links right (single place for routes)
+       ========================= -->
+  <header role="banner">
+    <div class="wrap nav" aria-label="Primary">
+      <a class="brand" href="/home.html" aria-label="Customer Health App — Home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 14.5l4-4 3 3 5-5 4 4" stroke="#0f3e36" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="6" cy="18" r="2" fill="#2c7a66"/>
+          </svg>
+        </span>
+        <span>Customer Health</span>
+      </a>
+
+      <!-- Only links to routes live here: one link per address -->
+      <nav class="main-nav" aria-label="Main">
+        <a href="/home.html" aria-current="page">Home</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/docs">API Docs</a>
+      </nav>
+    </div>
   </header>
 
-  <main class="wrap">
-    <!-- HERO -->
-    <section class="hero">
-      <div class="ribbons" aria-hidden="true"></div>
-      <h1>Understand Customer Health at a Glance</h1>
-      <p class="lead">
-        Turn product signals into a clear, explainable score. We look at <b>recent logins</b> and <b>API activity</b> for engagement,
-        <b>key feature coverage</b> for adoption, <b>support tickets</b> for friction, and <b>invoice timeliness</b> for financial reliability.
-        FastAPI computes scores on demand from Postgres, so what you see is real and current.
-      </p>
+  <!-- =========================
+       Hero
+       ========================= -->
+  <section class="hero" role="region" aria-label="Hero">
+    <!-- Professional pastel blur (your asset) -->
+    <div class="hero-art" aria-hidden="true">
+      <!-- Ensure this file exists at /assets/home-hero.jpg under your Nginx static dir -->
+      <img src="/assets/home-hero.jpg" alt="" loading="lazy">
+    </div>
 
-      <div class="cta-card">
-        <a class="btn primary" href="/api/dashboard">Analyze data</a>
-        <a class="btn ghost" href="https://github.com/yuval-rozen/Auditale-Home-Assignment" target="_blank" rel="noreferrer">View repo</a>
-      </div>
+    <div class="wrap hero-inner">
+      <div>
+        <h1>Understand customer health at a glance</h1>
+        <p class="lead">
+          Turn product signals into a clear, explainable score. Track engagement (logins &amp; API), adoption (key features),
+          friction (support tickets) and reliability (invoice timeliness). Scores compute on demand from Postgres via FastAPI.
 
-      <!-- quick stats -->
-      <div class="stats">
-        <div class="stat"><div class="k">5 signals</div><div class="s">logins, API, adoption, tickets, invoices</div></div>
-        <div class="stat"><div class="k">On-demand</div><div class="s">computed per request</div></div>
-        <div class="stat"><div class="k">Explainable</div><div class="s">factor breakdown for every customer</div></div>
-        <div class="stat"><div class="k">Postgres + FastAPI</div><div class="s">sane, production-style stack</div></div>
+          
+        </p>
       </div>
-    </section>
+        <div class="hero-cta" role="group" aria-label="Primary actions">
+            <a class="btn primary" href="/dashboard.html">Get Started</a>
+            <a class="btn" href="https://github.com/yuval-rozen/Auditale-Home-Assignment" target="_blank" rel="noopener">View Repo</a>
+        </div>
+    </div>
+  </section>
 
-    <!-- FEATURES -->
-    <section class="features">
-      <h2>Why this approach works</h2>
-      <div class="flist">
-        <div class="fitem">
-          <div class="badge" aria-hidden="true"></div>
-          <div>
-            <b>Behavior-first scoring</b>
-            <span>Signals mirror how real teams judge health: recency, breadth, stability, payments, and momentum.</span>
-          </div>
+
+  <!-- =========================
+       Features (trimmed to 3 for cleanliness)
+       ========================= -->
+  <section class="section wrap" aria-labelledby="features">
+    <h2 id="features">Why teams use Customer Health</h2>
+    <div class="features">
+      <article class="card">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M3 17l5-5 3 3 6-6 4 4" stroke="#0f3e36" stroke-width="2" stroke-linecap="round"/></svg>
         </div>
-        <div class="fitem">
-          <div class="badge" aria-hidden="true"></div>
-          <div>
-            <b>Neutral when data is missing</b>
-            <span>No invoice history? We treat it as neutral, not a penalty—useful for trials and new logos.</span>
-          </div>
+        <h3>Explainable scoring</h3>
+        <p>Factor-by-factor view across engagement, adoption, friction, and reliability — no black boxes.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M4 19V5m5 14V9m5 10V7m5 12V11" stroke="#0f3e36" stroke-width="2" stroke-linecap="round"/></svg>
         </div>
-        <div class="fitem">
-          <div class="badge" aria-hidden="true"></div>
-          <div>
-            <b>Simple to extend</b>
-            <span>Add new factors (e.g., NPS, contract term) without changing the dashboard structure.</span>
-          </div>
+        <h3>Signals that matter</h3>
+        <p>Recency, breadth, and stability reflect how CSMs actually judge customer momentum.</p>
+      </article>
+
+      <article class="card">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M4 4h16v16H4z" stroke="#0f3e36" stroke-width="2"/><path d="M4 10h16" stroke="#0f3e36" stroke-width="2"/></svg>
         </div>
+        <h3>Neutral gaps</h3>
+        <p>Missing data (e.g., no invoices yet) is treated neutrally so trials aren’t unfairly penalized.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- =========================
+       How it works
+       ========================= -->
+  <section class="section wrap" aria-labelledby="how">
+    <h2 id="how">How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="num" aria-hidden="true">1</div>
+        <h3>Ingest events</h3>
+        <p>Pull logins, API calls, tickets, and invoices into Postgres (batch or streaming).</p>
       </div>
-    </section>
-  </main>
+      <div class="step">
+        <div class="num" aria-hidden="true">2</div>
+        <h3>Compute health</h3>
+        <p>FastAPI calculates a weighted score per account with explainable factors and neutral gaps.</p>
+      </div>
+      <div class="step">
+        <div class="num" aria-hidden="true">3</div>
+        <h3>Act on risks</h3>
+        <p>Alert CSMs, trigger playbooks, or sync the score into your CRM via jobs or webhooks.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================
+       FAQ (no internal route links to avoid duplicates)
+       ========================= -->
+  <section class="section wrap" aria-labelledby="faq">
+    <h2 id="faq">Frequently asked questions</h2>
+    <div class="faq" role="list">
+      <details role="listitem">
+        <summary aria-controls="q1" aria-expanded="false">
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          How is the health score calculated?
+        </summary>
+        <p id="q1">We combine engagement recency, feature coverage, ticket volume, and invoice timeliness with weights you can tune. Missing data is treated neutrally.</p>
+      </details>
+
+      <details role="listitem">
+        <summary aria-controls="q2" aria-expanded="false">
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Does it update in real time?
+        </summary>
+        <p id="q2">Yes — scores compute on request from the latest tables, so the dashboard reflects current signals.</p>
+      </details>
+
+      <details role="listitem">
+        <summary aria-controls="q3" aria-expanded="false">
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Can I export the data?
+        </summary>
+        <p id="q3">Yes. Use the API to pipe scores into your CRM or BI tool when your reverse proxy exposes the documentation at <code>/docs</code>.</p>
+      </details>
+
+      <details role="listitem">
+        <summary aria-controls="q4" aria-expanded="false">
+          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          What happens if invoices are missing?
+        </summary>
+        <p id="q4">No penalty — we treat missing factors as neutral so new trials aren’t unfairly downgraded.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer role="contentinfo">
+    <div class="wrap foot">
+      <div>&copy; <span id="year"></span> Customer Health</div>
+    </div>
+  </footer>
+
+  <!-- Tiny script for FAQ aria + year; no external deps -->
+  <script>
+    (function(){
+      var y=document.getElementById('year'); if(y) y.textContent=new Date().getFullYear();
+      var summaries=document.querySelectorAll('details > summary');
+      summaries.forEach(function(s){
+        var d=s.parentElement;
+        function sync(){ s.setAttribute('aria-expanded', d.open ? 'true' : 'false'); }
+        s.addEventListener('click', function(){ requestAnimationFrame(sync); });
+        d.addEventListener('toggle', sync);
+        s.setAttribute('role','button');
+        s.tabIndex=0;
+        sync();
+      });
+    })();
+  </script>
 </body>
 </html>
