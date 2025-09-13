@@ -1,14 +1,23 @@
+# backend/db.py
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Connection string: matches your docker-compose.yml credentials
-DATABASE_URL = "postgresql+psycopg2://user:password@localhost:5432/customerdb"
+# In Docker, talk to the "db" service name (not localhost)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg2://postgres:postgres@db:5432/healthdb",
+)
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Robust to brief DB restarts; SQLAlchemy v2-compatible
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, future=True)
+
 Base = declarative_base()
 
-# Dependency to get DB session
+
+# FastAPI dependency
 def get_db():
     db = SessionLocal()
     try:

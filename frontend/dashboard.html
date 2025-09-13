@@ -88,9 +88,6 @@
 
         <h3 class="small" style="margin-top:16px">Factors</h3>
         <div id="factors"></div>
-
-        <h3 class="small" style="margin-top:16px">Recent Events (if available)</h3>
-        <div id="events" class="small muted">—</div>
       </div>
     </aside>
   </main>
@@ -200,24 +197,27 @@ async function loadDetail(cust){
   }catch(e){
     factors.innerHTML = `<div class="muted small">Failed to load breakdown: ${e.message}</div>`;
   }
+  // // Recent events are not part of the required endpoints
+  // const eventsEl = document.getElementById('events');
+  // eventsEl.textContent = 'Not available in this demo.';
 
-  // recent events (optional)
-  const eventsEl = document.getElementById('events');
-  eventsEl.textContent = '—';
-  try{
-    const res = await fetch(`${apiBase}/api/customers/${cust.id}/events?limit=10`);
-    if(res.ok){
-      const items = await res.json();
-      if(Array.isArray(items) && items.length){
-        eventsEl.classList.remove('muted');
-        eventsEl.innerHTML = items.map(ev=>{
-          const t=ev.type||ev.event_type||'event';
-          const ts=ev.timestamp||ev.created_at||ev.occurred_at||'';
-          return `<div>• <strong>${t}</strong> <span class="muted small">${ts}</span></div>`;
-        }).join('');
-      }else eventsEl.textContent='No recent events.';
-    }else eventsEl.textContent='Events endpoint not available.';
-  }catch{}
+  // // recent events (optional)
+  // const eventsEl = document.getElementById('events');
+  // eventsEl.textContent = '—';
+  // try{
+  //   const res = await fetch(`${apiBase}/api/customers/${cust.id}/events?limit=10`);
+  //   if(res.ok){
+  //     const items = await res.json();
+  //     if(Array.isArray(items) && items.length){
+  //       eventsEl.classList.remove('muted');
+  //       eventsEl.innerHTML = items.map(ev=>{
+  //         const t=ev.type||ev.event_type||'event';
+  //         const ts=ev.timestamp||ev.created_at||ev.occurred_at||'';
+  //         return `<div>• <strong>${t}</strong> <span class="muted small">${ts}</span></div>`;
+  //       }).join('');
+  //     }else eventsEl.textContent='No recent events.';
+  //   }else eventsEl.textContent='Events endpoint not available.';
+  // }catch{}
 }
 
 /* ---- Simple SVG pie renderer (no libs) ---- */

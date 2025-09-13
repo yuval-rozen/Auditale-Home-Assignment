@@ -55,10 +55,10 @@ app = FastAPI(
     description="Compute customer health from usage, support, billing, and API trends.",
     version="0.1.0",
 )
-# Mount the whole frontend folder (so assets work if you add any later)
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
-HOME = Path("frontend/home.html").resolve()
-DASH = Path("frontend/dashboard.html").resolve()
+# # Mount the whole frontend folder (so assets work if you add any later)
+# app.mount("/static", StaticFiles(directory="frontend"), name="static")
+# HOME = Path("frontend/home.html").resolve()
+# DASH = Path("frontend/dashboard.html").resolve()
 
 @app.on_event("startup")
 def startup_event() -> None:
@@ -71,11 +71,11 @@ def startup_event() -> None:
     """
     Base.metadata.create_all(bind=engine)
 
-@app.get("/app")          # homepage
-def home_page(): return FileResponse(HOME)
-
-@app.get("/api/dashboard")# dashboard
-def dashboard_page(): return FileResponse(DASH)
+# @app.get("/app")          # homepage
+# def home_page(): return FileResponse(HOME)
+#
+# @app.get("/api/dashboard")# dashboard
+# def dashboard_page(): return FileResponse(DASH)
 
 @app.get("/api/customers", response_model=List[CustomerOut], tags=["Customers"])
 def list_customers(db: Session = Depends(get_db)) -> List[CustomerOut]:
@@ -235,9 +235,6 @@ def add_event(customer_id: int, payload: EventIn, db: Session = Depends(get_db))
 
     return {"id": ev.id, "status": "created"}
 
-@app.get("/api/dashboard")
-async def dashboard():
-    return FileResponse(INDEX)
 
 @app.get("/", tags=["Meta"])
 def root() -> dict:
