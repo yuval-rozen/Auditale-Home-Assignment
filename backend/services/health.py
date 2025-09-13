@@ -1,161 +1,62 @@
+# backend/health.py
 """
 Health score utilities.
 
-This module turns raw usage/finance/support signals into normalized 0..100
-factor scores and then into a single weighted health score.
+Factors (0..100) → weighted sum (0..100).
+Windows:
+- Logins & API trend: 30d
+- Feature adoption & support load: 90d
+- Invoice timeliness: last few invoices
 
-Design goals:
-- Simple, explainable math (reviewers can reason about it).
-- Stable scores that avoid extreme 0/100 unless the data clearly supports it.
-- Neutral handling when there is "no evidence" for a factor (e.g., no invoices yet).
-
-Time windows (chosen for domain reasons, explained in docs):
-- Logins and API trend: 30 days (short-term engagement)
-- Feature adoption & support load: 90 days (medium-term stability)
-- Invoice timeliness: last few invoices (billing cycles), passed in as counts
-
-Weights reflect typical SaaS retention drivers:
-- Engagement (login frequency) and adoption (breadth of features) are highest.
-- Support pain and billing reliability are important secondary drivers.
-- API trend is powerful when present but not used by every customer.
+Weights reflect SaaS retention drivers.
 """
 
-from typing import Dict, Optional
+from typing import Dict
 
-
-# ------------------------
-# Factor weights (0..1 sum)
-# ------------------------
 WEIGHTS: Dict[str, float] = {
-    "loginFrequency":     0.25,  # engagement
-    "featureAdoption":    0.25,  # breadth of value
-    "supportLoad":        0.15,  # pain/friction
-    "invoiceTimeliness":  0.20,  # financial reliability
-    "apiTrend":           0.15,  # integration depth / momentum
+    "loginFrequency":     0.25,
+    "featureAdoption":    0.25,
+    "supportLoad":        0.15,
+    "invoiceTimeliness":  0.20,
+    "apiTrend":           0.15,
 }
 
-# Number of "key features" your product team cares about for adoption.
-# Keep this list in seed/data docs; the model just needs the count.
 TOTAL_KEY_FEATURES: int = 5
 
-
-# ---------------
-# Helper utilities
-# ---------------
 def _clamp01(x: float) -> float:
-    """Clamp a float into [0.0, 1.0]."""
     return 0.0 if x < 0.0 else 1.0 if x > 1.0 else x
 
-
 def _pct(x: float) -> float:
-    """Convert 0..1 to 0..100 with clamping."""
     return _clamp01(x) * 100.0
 
-
-# -----------------
-# Factor score rules
-# -----------------
-def score_login_frequency(logins_30d: int, target: int = 16) -> float:
+def score_login_frequency(logins_30d: int, target: int = 12) -> float:
     """
-      Map last-30d login count to 0..100.
-      0 = none; target = 100; above target saturates near 100.
-      """
-    # old default target was 20
-    ratio = logins_30d / max(1, target)
-    return _pct(min(1.0, ratio))
-
-
-def score_feature_adoption(distinct_features_used_90d: int,
-                           total_features: int = TOTAL_KEY_FEATURES) -> float:
+    Map last-30d logins to 0..100. A target of ~12 (3/week) yields realistic centering.
     """
-    Share of 'key' features the customer actually used in the last 90 days.
+    return _pct(min(1.0, logins_30d / max(1, target)))
 
-    Rationale:
-      - Adoption is about breadth (stickiness), not raw counts.
-      - 90 days gives a fair window for teams to try multiple features.
-
-    Neutrality:
-      - If total_features is 0 (misconfiguration), return neutral 50 to avoid division by zero.
-    """
+def score_feature_adoption(distinct_features_used_90d: int, total_features: int = TOTAL_KEY_FEATURES) -> float:
     if total_features <= 0:
-        return 50.0  # neutral if no definition of 'key features'
+        return 50.0
     return _pct(distinct_features_used_90d / float(total_features))
 
-
 def score_support_load(tickets_90d: int, max_tickets: int = 10) -> float:
-    """
-    Fewer tickets → better (inverse). 0 tickets ~100, ≥max_tickets ~0.
-    """
     x = 1.0 - min(1.0, tickets_90d / max_tickets)
     return _pct(x)
 
-
-def score_invoice_timeliness_counts(on_time_invoices: int,
-                                    total_invoices: int,
-                                    neutral_if_no_history: bool = True) -> float:
-    """
-    % invoices paid on/before due date.
-
-    Neutral handling:
-      - If there are ZERO invoices and `neutral_if_no_history` is True,
-        return 50. This avoids treating 'no billing yet' as 'all late'.
-
-    Examples:
-      on_time=2, total=3 -> 66.67
-      on_time=0, total=0 -> 50.0 (neutral if enabled)
-    """
+def score_invoice_timeliness_counts(on_time_invoices: int, total_invoices: int, neutral_if_no_history: bool = True) -> float:
     if total_invoices <= 0:
         return 50.0 if neutral_if_no_history else 0.0
     return _pct(on_time_invoices / float(total_invoices))
 
-
-def score_invoice_timeliness_ratio(on_time_ratio: float,
-                                   treat_zero_as_neutral: bool = True) -> float:
-    """
-    Compatibility helper for existing code that only has a ratio.
-
-    If treat_zero_as_neutral=True, a 0.0 is interpreted as 'no history' and returns 50.
-    WARNING: This masks the 'all invoices were late' case. Prefer the *_counts variant
-    when you can pass both on_time and total.
-    """
-    if on_time_ratio <= 0.0 and treat_zero_as_neutral:
-        return 50.0
-    return _pct(on_time_ratio)
-
-
 def score_api_trend(curr_30d: int, prev_30d: int, smoothing: int = 3) -> float:
-    """
-    50 = flat; >50 up; <50 down. Smoothing dampens noise.
-    """
     num = curr_30d + smoothing
     den = max(1, prev_30d + smoothing)
     ratio = num / den
-    # ratio=1 → 50, ratio=2 → ~75, ratio=0.5 → ~25
     return round(50.0 + 50.0 * (ratio - 1.0) / (ratio + 1.0), 2)
 
-
-# -----------------
-# Weighted aggregate
-# -----------------
 def weighted_score(factors_0_100: Dict[str, float]) -> float:
-    """
-    Combine individual factor scores (each 0..100) into a single 0..100 health score.
-
-    Missing factors default to 0 (conservative). If you prefer 'neutral when missing',
-    pass 50s for factors you want to treat as unknown/neutral.
-
-    Example:
-      factors = {
-        "loginFrequency": 60.0,
-        "featureAdoption": 40.0,
-        "supportLoad": 80.0,
-        "invoiceTimeliness": 100.0,
-        "apiTrend": 55.0,
-      }
-      -> ~67.5 with current weights
-    """
     total = 0.0
-    for name, weight in WEIGHTS.items():
-        total += weight * factors_0_100.get(name, 0.0)
-    # Two decimals are nice for UI/readability
+    for name, w in WEIGHTS.items():
+        total += w * factors_0_100.get(name, 0.0)
     return round(total, 2)

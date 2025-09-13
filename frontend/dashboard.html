@@ -8,107 +8,194 @@
     :root{
       --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --muted:#6b7280;
       --text:#0f172a; --bg:#f6f7fb; --card:#ffffff; --line:#e5e7eb; --chip:#eef2ff; --chipText:#3730a3;
-      --accent:#4f46e5;
+      --accent:#4f46e5; --accent-2:#7c3aed;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Ubuntu;background:var(--bg);color:var(--text)}
-    header{padding:16px 20px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;display:flex;gap:12px;align-items:center}
-    header a{color:var(--muted);text-decoration:none;margin-right:12px}
-    .logo{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#7c3aed,var(--accent))}
-    main{display:grid;grid-template-columns:1fr 420px;gap:16px;padding:16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-    .card h2{margin:0;padding:12px 14px;border-bottom:1px solid var(--line);font-size:16px}
-    .content{padding:12px 14px}
-    .scroll{max-height:60vh;overflow:auto}
+    a{color:inherit}
+    .container{max-width:1200px;margin:0 auto;padding:16px}
+    header{padding:14px 16px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    .nav{display:flex;gap:14px;align-items:center;max-width:1200px;margin:0 auto}
+    .logo{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--accent-2),var(--accent))}
+    .nav a{color:var(--muted);text-decoration:none;font-weight:500}
+    .nav a.active{color:#111827}
 
-    .grid-head{display:grid;grid-template-columns:1fr 420px;gap:16px;padding:16px;padding-bottom:0}
-    .viz{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.04);padding:8px 10px}
-    .legend{display:flex;gap:10px;align-items:center;margin:6px 0 2px 6px}
+    .hero{background:linear-gradient(180deg,#fff, #fbfbff);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.05);padding:18px 20px;margin-top:14px}
+    .hero-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+    .hero-title{font-size:20px;font-weight:700;margin:0}
+    .hero-sub{color:var(--muted);font-size:14px;margin-top:4px}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+    .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+    .kpi .label{font-size:12px;color:var(--muted)}
+    .kpi .value{font-size:22px;font-weight:800;letter-spacing:-0.02em}
+    .kpi.ok .value{color:var(--ok)} .kpi.warn .value{color:var(--warn)} .kpi.bad .value{color:var(--bad)}
+    .kpi .delta{font-size:12px;color:var(--muted)}
+
+    .row{display:grid;grid-template-columns:1fr 420px;gap:16px;margin-top:16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .card h2{margin:0;padding:12px 16px;border-bottom:1px solid var(--line);font-size:16px}
+    .content{padding:14px 16px}
+    .scroll{max-height:62vh;overflow:auto}
+
+    .viz{padding:8px 10px}
+    .legend{display:flex;gap:10px;align-items:center;justify-content:center;margin:6px 0 8px}
     .legend .dot{width:10px;height:10px;border-radius:999px}
     .dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
     .legend span{font-size:12px;color:var(--muted)}
     .pie-wrap{display:flex;align-items:center;justify-content:center}
 
+    .toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+    .search{flex:1;min-width:200px}
+    .search input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
+    .filters{display:flex;gap:8px}
+    .select{padding:9px 10px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
+
     table{width:100%;border-collapse:collapse}
-    thead th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:8px 6px;border-bottom:1px solid var(--line)}
+    thead th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:8px 6px;border-bottom:1px solid var(--line)}
     tbody td{padding:10px 6px;border-bottom:1px solid #f1f5f9;font-size:14px}
     tbody tr{cursor:pointer} tbody tr:hover{background:#f8fafc}
 
     .pill{background:var(--chip);color:var(--chipText);padding:2px 8px;border:1px solid #e0e7ff;border-radius:999px;font-size:12px}
-    .chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:#eef2f7}
+    .chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;background:#eef2f7}
     .chip.ok{color:var(--ok)} .chip.warn{color:var(--warn)} .chip.bad{color:var(--bad)}
     .bar{height:10px;background:#e5e7eb;border-radius:8px;overflow:hidden}
-    .bar>span{display:block;height:100%;background:var(--accent)}
+    .bar>span{display:block;height:100%;background:var(--accent);transform-origin:left center;transition:transform .4s ease}
     .muted{color:var(--muted)} .small{font-size:12px}
-    @media (max-width: 980px){ main{grid-template-columns:1fr}.grid-head{grid-template-columns:1fr}}
+
+    @media (max-width: 1100px){
+      .row{grid-template-columns:1fr}
+      .scroll{max-height:none}
+    }
   </style>
 </head>
 <body>
   <header>
-    <div class="logo"></div>
-    <a href="/app">Home</a>
-    <a href="/api/dashboard" style="font-weight:700;color:#111827">Dashboard</a>
-    <a href="/docs">API docs</a>
+    <nav class="nav">
+      <div class="logo"></div>
+      <a href="/app">Home</a>
+      <a href="/api/dashboard" class="active">Dashboard</a>
+      <a href="/docs">API docs</a>
+    </nav>
   </header>
 
-  <section class="grid-head">
-    <div class="viz">
-      <div class="legend">
-        <div class="dot ok"></div><span>Healthy (≥ 70)</span>
-        <div class="dot warn" style="margin-left:8px"></div><span>At-risk (30–70)</span>
-        <div class="dot bad" style="margin-left:8px"></div><span>Churn-risk (&lt; 30)</span>
+  <div class="container">
+    <!-- HERO / KPIs -->
+    <section class="hero">
+      <div class="hero-head">
+        <div>
+          <h1 class="hero-title">Customer Health Dashboard</h1>
+          <div class="hero-sub">Overview of engagement, adoption, support load, billing reliability, and API momentum</div>
+        </div>
+        <div class="legend">
+          <div class="dot ok"></div><span>Healthy (≥ 70)</span>
+          <div class="dot warn" style="margin-left:8px"></div><span>At-risk (50–69)</span>
+          <div class="dot bad" style="margin-left:8px"></div><span>Churn-risk (&lt; 50)</span>
+        </div>
       </div>
-      <div class="pie-wrap"><svg id="dist-pie" width="340" height="200" viewBox="0 0 340 200" role="img" aria-label="Customer distribution pie"></svg></div>
-    </div>
-    <div></div>
-  </section>
 
-  <main>
-    <section class="card">
-      <h2>Customers</h2>
-      <div class="content scroll">
-        <table>
-          <thead>
-            <tr><th>Name</th><th>Segment</th><th>Health</th><th>Status</th></tr>
-          </thead>
-          <tbody id="customers-body"></tbody>
-        </table>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="label">Total Customers</div>
+          <div class="value" id="kpi-total">—</div>
+          <div class="delta muted" id="kpi-last-update">loading…</div>
+        </div>
+        <div class="kpi ok">
+          <div class="label">Healthy</div>
+          <div class="value" id="kpi-healthy">—</div>
+          <div class="delta muted" id="kpi-healthy-pct">—</div>
+        </div>
+        <div class="kpi warn">
+          <div class="label">At-risk</div>
+          <div class="value" id="kpi-risk">—</div>
+          <div class="delta muted" id="kpi-risk-pct">—</div>
+        </div>
+        <div class="kpi bad">
+          <div class="label">Churn-risk</div>
+          <div class="value" id="kpi-churn">—</div>
+          <div class="delta muted" id="kpi-churn-pct">—</div>
+        </div>
       </div>
     </section>
 
-    <aside class="card" id="detail-card" hidden>
-      <h2 id="detail-title">Health Detail</h2>
-      <div class="content">
-        <div class="row" style="display:flex;justify-content:space-between;align-items:center">
-          <div class="muted">Customer</div><div class="pill" id="detail-segment">—</div>
-        </div>
-        <div class="row" style="display:flex;justify-content:space-between;margin-top:6px">
-          <div class="muted">Health Score</div><div id="detail-score" class="chip">—</div>
-        </div>
-
-        <h3 class="small" style="margin-top:16px">Factors</h3>
-        <div id="factors"></div>
+    <!-- DISTRIBUTION -->
+    <section class="card viz" style="margin-top:14px">
+      <div class="pie-wrap">
+        <svg id="dist-pie" width="660" height="220" viewBox="0 0 660 220" role="img" aria-label="Customer health distribution"></svg>
       </div>
-    </aside>
-  </main>
+    </section>
+
+    <!-- GRID -->
+    <section class="row">
+      <section class="card">
+        <h2>Customers</h2>
+        <div class="content">
+          <div class="toolbar">
+            <div class="search"><input id="search" type="search" placeholder="Search by name…" /></div>
+            <div class="filters">
+              <select id="segment" class="select">
+                <option value="">All segments</option>
+                <option value="enterprise">Enterprise</option>
+                <option value="SMB">SMB</option>
+                <option value="startup">Startup</option>
+              </select>
+              <select id="status" class="select">
+                <option value="">All statuses</option>
+                <option value="healthy">Healthy (≥70)</option>
+                <option value="risk">At-risk (50–69)</option>
+                <option value="churn">Churn-risk (&lt;50)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr><th style="width:40%">Name</th><th style="width:20%">Segment</th><th style="width:20%">Health</th><th style="width:20%">Status</th></tr>
+              </thead>
+              <tbody id="customers-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card" id="detail-card" hidden>
+        <h2 id="detail-title">Health Detail</h2>
+        <div class="content">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="muted">Customer</div><div class="pill" id="detail-segment">—</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px">
+            <div class="muted">Health Score</div><div id="detail-score" class="chip">—</div>
+          </div>
+
+          <h3 class="small" style="margin-top:16px">Factors</h3>
+          <div id="factors"></div>
+        </div>
+      </aside>
+    </section>
+  </div>
 
 <script>
 const apiBase = location.origin;
 
-function statusFromScore(s){
-  if(s>=70) return {label:'Healthy',cls:'ok'};
-  if(s>=30) return {label:'At-risk',cls:'warn'};
-  return {label:'Churn-risk',cls:'bad'};
-}
 const percent = n => Math.max(0, Math.min(100, Math.round(n)));
+function statusFromScore(s){
+  if(s>=70) return {label:'Healthy',cls:'ok',key:'healthy'};
+  if(s>=50) return {label:'At-risk',cls:'warn',key:'risk'};
+  return {label:'Churn-risk',cls:'bad',key:'churn'};
+}
 
 function renderRow(c){
   const tr = document.createElement('tr');
+  tr.dataset.name = (c.name||'').toLowerCase();
+  tr.dataset.segment = c.segment||'';
+  tr.dataset.id = c.id;
+
   tr.innerHTML = `
     <td>${c.name ?? '—'}</td>
     <td><span class="pill">${c.segment ?? '—'}</span></td>
-    <td class="health" data-id="${c.id}">—</td>
-    <td><span class="chip" id="status-${c.id}">—</span></td>
+    <td class="health">—</td>
+    <td><span class="chip">—</span></td>
   `;
   tr.addEventListener('click', ()=>loadDetail(c));
   return tr;
@@ -123,34 +210,42 @@ async function fetchJSON(url, opts){
 async function loadCustomers(){
   const tbody = document.getElementById('customers-body');
   tbody.innerHTML = '<tr><td colspan="4" class="muted">Loading…</td></tr>';
+  let list = [];
+  const dist = {healthy:0, risk:0, churn:0};
+
   try{
-    const list = await fetchJSON(`${apiBase}/api/customers`);
+    list = await fetchJSON(`${apiBase}/api/customers`);
     tbody.innerHTML = '';
     list.forEach(c => tbody.appendChild(renderRow(c)));
 
-    const dist = {healthy:0, risk:0, churn:0};
     await Promise.all(list.map(async c=>{
       try{
         const detail = await fetchJSON(`${apiBase}/api/customers/${c.id}/health`);
         const score = detail.healthScore ?? detail.health_score ?? 0;
 
-        const cell = tbody.querySelector(`td.health[data-id="${c.id}"]`);
-        if(cell) cell.textContent = percent(score);
+        const row = tbody.querySelector(`tr[data-id="${c.id}"]`);
+        row.dataset.score = score;
 
-        const chip = document.getElementById(`status-${c.id}`);
+        const healthCell = row.querySelector('td.health');
+        if(healthCell) healthCell.textContent = percent(score);
+
+        const chip = row.querySelector('.chip');
         if(chip){
-          const {label, cls} = statusFromScore(score);
+          const {label, cls, key} = statusFromScore(score);
           chip.textContent = label;
           chip.className = `chip ${cls}`;
+          row.dataset.status = key;
         }
 
         if(score>=70) dist.healthy++;
-        else if(score>=30) dist.risk++;
+        else if(score>=50) dist.risk++;
         else dist.churn++;
       }catch{}
     }));
 
+    updateKPIs(dist, list.length);
     drawPie(dist);
+    attachFiltering();
   }catch(e){
     tbody.innerHTML = `<tr><td colspan="4" class="muted">Failed to load: ${e.message}</td></tr>`;
   }
@@ -164,7 +259,7 @@ function factorBar(name, value){
     <div style="display:flex;justify-content:space-between">
       <div>${name}</div><div class="muted">${v}</div>
     </div>
-    <div class="bar"><span style="width:${v}%"></span></div>
+    <div class="bar"><span style="transform:scaleX(${v/100})"></span></div>
   `;
   return wrap;
 }
@@ -197,33 +292,46 @@ async function loadDetail(cust){
   }catch(e){
     factors.innerHTML = `<div class="muted small">Failed to load breakdown: ${e.message}</div>`;
   }
-  // // Recent events are not part of the required endpoints
-  // const eventsEl = document.getElementById('events');
-  // eventsEl.textContent = 'Not available in this demo.';
-
-  // // recent events (optional)
-  // const eventsEl = document.getElementById('events');
-  // eventsEl.textContent = '—';
-  // try{
-  //   const res = await fetch(`${apiBase}/api/customers/${cust.id}/events?limit=10`);
-  //   if(res.ok){
-  //     const items = await res.json();
-  //     if(Array.isArray(items) && items.length){
-  //       eventsEl.classList.remove('muted');
-  //       eventsEl.innerHTML = items.map(ev=>{
-  //         const t=ev.type||ev.event_type||'event';
-  //         const ts=ev.timestamp||ev.created_at||ev.occurred_at||'';
-  //         return `<div>• <strong>${t}</strong> <span class="muted small">${ts}</span></div>`;
-  //       }).join('');
-  //     }else eventsEl.textContent='No recent events.';
-  //   }else eventsEl.textContent='Events endpoint not available.';
-  // }catch{}
 }
 
-/* ---- Simple SVG pie renderer (no libs) ---- */
+/* ---- KPIs ---- */
+function updateKPIs(dist, total){
+  const $ = id => document.getElementById(id);
+  const pct = (n)=> total? `${Math.round(n/total*100)}%` : '—';
+
+  $('kpi-total').textContent = total || '0';
+  $('kpi-healthy').textContent = dist.healthy;
+  $('kpi-risk').textContent = dist.risk;
+  $('kpi-churn').textContent = dist.churn;
+
+  $('kpi-healthy-pct').textContent = pct(dist.healthy);
+  $('kpi-risk-pct').textContent = pct(dist.risk);
+  $('kpi-churn-pct').textContent = pct(dist.churn);
+
+  const now = new Date();
+  $('kpi-last-update').textContent = `Updated ${now.toLocaleString()}`;
+}
+
+/* ---- Pie (SVG, centered, larger) ---- */
 function drawPie(dist){
   const svg = document.getElementById('dist-pie');
   if(!svg) return;
+  svg.innerHTML = '';
+
+  // Original canvas + layout (unchanged)
+  const W = 660, H = 220;
+  const r = 90;
+  const cx0 = 140;      // pie center (original)
+  const labelX0 = 310;  // labels start (original)
+
+  // Center the whole composition: shift so midpoint between pie and labels is centered
+  const compMid = (cx0 + labelX0) / 2;
+  const shiftX = (W / 2) - compMid;
+
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('transform', `translate(${shiftX},0)`);
+  svg.appendChild(g);
+
   const total = dist.healthy + dist.risk + dist.churn || 1;
   const parts = [
     {label:'Healthy', value:dist.healthy, color:'var(--ok)'},
@@ -231,9 +339,8 @@ function drawPie(dist){
     {label:'Churn-risk', value:dist.churn, color:'var(--bad)'},
   ];
 
-  svg.innerHTML = ''; // clear
-  const cx=100, cy=100, r=80; // pie center & radius
-  let angle = -Math.PI/2; // start at top
+  let angle = -Math.PI/2;
+  const cx = cx0, cy = H/2;
 
   parts.forEach(p=>{
     const frac = p.value/total;
@@ -243,39 +350,59 @@ function drawPie(dist){
     const largeArc = (end-angle) > Math.PI ? 1 : 0;
 
     const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    const d = [
-      `M ${cx} ${cy}`,
-      `L ${x1} ${y1}`,
-      `A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`,
-      'Z'
-    ].join(' ');
-    path.setAttribute('d', d);
+    path.setAttribute('d', `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`);
     path.setAttribute('fill', p.color);
-    svg.appendChild(path);
+    g.appendChild(path);
 
     angle = end;
   });
 
-  // add counts text
-  const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-  txt.setAttribute('x','220'); txt.setAttribute('y','90');
-  txt.setAttribute('fill','#111827'); txt.setAttribute('font-size','12');
-  txt.innerHTML = `Total: ${total}\nHealthy: ${dist.healthy}\nAt-risk: ${dist.risk}\nChurn: ${dist.churn}`.replace(/\n/g,'');
-  // stack counts
+  // Labels (unchanged look)
+  const labelX = labelX0, baseY = cy - 20;
   const lines = [
     `Total: ${total}`,
     `Healthy: ${dist.healthy}`,
     `At-risk: ${dist.risk}`,
     `Churn: ${dist.churn}`
   ];
+  const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+  text.setAttribute('x', labelX);
+  text.setAttribute('y', baseY);
+  text.setAttribute('fill','#111827');
+  text.setAttribute('font-size','14');
   lines.forEach((line,i)=>{
     const tspan = document.createElementNS('http://www.w3.org/2000/svg','tspan');
-    tspan.setAttribute('x','220');
-    tspan.setAttribute('dy', i? '1.2em':'0');
+    tspan.setAttribute('x', labelX);
+    tspan.setAttribute('dy', i? '1.4em':'0');
     tspan.textContent = line;
-    txt.appendChild(tspan);
+    text.appendChild(tspan);
   });
-  svg.appendChild(txt);
+  g.appendChild(text);
+}
+
+
+/* ---- Filtering (search, segment, status) ---- */
+function attachFiltering(){
+  const search = document.getElementById('search');
+  const segSel = document.getElementById('segment');
+  const statSel = document.getElementById('status');
+  const tbody = document.getElementById('customers-body');
+
+  function apply(){
+    const q = (search.value||'').toLowerCase();
+    const seg = segSel.value;
+    const st = statSel.value;
+
+    Array.from(tbody.querySelectorAll('tr')).forEach(tr=>{
+      const okName = !q || tr.dataset.name.includes(q);
+      const okSeg  = !seg || tr.dataset.segment === seg;
+      const okSt   = !st  || tr.dataset.status === st;
+      tr.style.display = (okName && okSeg && okSt) ? '' : 'none';
+    });
+  }
+  search.addEventListener('input', apply);
+  segSel.addEventListener('change', apply);
+  statSel.addEventListener('change', apply);
 }
 
 loadCustomers();
