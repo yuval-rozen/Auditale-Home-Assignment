@@ -27,7 +27,8 @@ Design decisions (high level)
 
 from datetime import datetime, timedelta
 from typing import List
-
+from datetime import datetime
+from fastapi import HTTPException
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -81,7 +82,6 @@ def startup_event() -> None:
 def list_customers(db: Session = Depends(get_db)) -> List[CustomerOut]:
     """
     List customers (lightweight overview).
-
     Returns the raw database fields for customers. Note that `health_score` in the
     table is a placeholder; the *real* health is a derived value computed by
     `/api/customers/{id}/health` from recent activity.
@@ -190,6 +190,11 @@ def customer_health(customer_id: int, db: Session = Depends(get_db)) -> HealthOu
     }
     final_score = weighted_score(factors)
 
+    customer.health_score = round(final_score, 1)
+    db.add(customer)
+    db.commit()
+    db.refresh(customer)
+
     return HealthOut(
         id=customer.id,
         name=customer.name,
@@ -202,37 +207,62 @@ def customer_health(customer_id: int, db: Session = Depends(get_db)) -> HealthOu
 @app.post("/api/customers/{customer_id}/events", status_code=201, tags=["Ingest"])
 def add_event(customer_id: int, payload: EventIn, db: Session = Depends(get_db)) -> dict:
     """
-    Ingest an event for a customer (minimal audit/log pipeline).
+       Ingest a domain event for a customer.
 
-    Accepted event types (from the assignment):
-      - "login"
-      - "api_call"
-      - "feature_used"      (include {"feature_name": "..."} in meta)
-      - "ticket_opened"
-      - "invoice_paid"      (include {"amount": 123.45} in meta if desired)
+         - "feature_used"  → FeatureUsage(customer_id, feature_name, used_at)
+         - "ticket_opened" → SupportTicket(customer_id, status, created_at)
+         - "invoice_paid"  → Invoice(customer_id, due_date, paid_date, amount)
+         - "login"         → Event row
+         - "api_call"      → Event row
 
-    Notes:
-      - This endpoint is intentionally permissive for demo purposes and assumes
-        payload validation happens at the schema level (Pydantic).
-      - These rows fuel the health computations:
-          * login/api_call -> events table (engagement, API trend)
-          * feature_used   -> feature_usage table (adoption breadth)
-          * ticket_opened  -> support_tickets table (friction)
-          * invoice_paid   -> invoices table (timeliness)
-    """
+       Responses:
+           201 Created: {"id": <event_id>, "status": "created"}
+
+       Raises:
+           HTTPException(404):  if customer not found.
+           HTTPException(400):  on unknown type or missing required meta fields.
+       """
     customer = db.get(Customer, customer_id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    # If timestamp is omitted, treat as "now" to make manual testing easy.
+    # Parse timestamp; allow ISO with space or 'T'
     ts = datetime.fromisoformat(payload.timestamp) if payload.timestamp else datetime.utcnow()
 
-    # Store the raw event as-is in the events table (simple unified log)
-    ev = Event(customer_id=customer_id, type=payload.type, timestamp=ts, meta=payload.meta or {})
+    t = (payload.type or "").strip()
+    meta = payload.meta or {}
+
+    # 1) Always log the raw event (simple audit trail)
+    ev = Event(customer_id=customer_id, type=t, timestamp=ts, meta=meta)
     db.add(ev)
+
+    # 2) Also write the domain-specific row so health can see it
+    if t == "feature_used":
+        fname = meta.get("feature_name")
+        if not fname:
+            raise HTTPException(status_code=400, detail="feature_used requires meta.feature_name")
+        db.add(FeatureUsage(customer_id=customer_id, feature_name=fname, used_at=ts))
+
+    elif t == "ticket_opened":
+        # optional: allow meta.status; default to "open"
+        status = meta.get("status", "open")
+        db.add(SupportTicket(customer_id=customer_id, status=status, created_at=ts))
+
+    elif t == "invoice_paid":
+        # On-time if paid_date <= due_date. Let clients send due_date; default to ts.
+        amount = float(meta.get("amount", 0.0))
+        due_str = meta.get("due_date")  # e.g. "2025-09-01 00:00:00"
+        due = datetime.fromisoformat(due_str) if due_str else ts
+        db.add(Invoice(customer_id=customer_id, due_date=due, paid_date=ts, amount=amount))
+
+    elif t in ("login", "api_call"):
+        pass  # already captured in Event table for those factors
+
+    else:
+        raise HTTPException(status_code=400, detail=f"Unknown event type: {t}")
+
     db.commit()
     db.refresh(ev)
-
     return {"id": ev.id, "status": "created"}
 
 

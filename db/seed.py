@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-# --- Add backend/ to sys.path so we can import your models & DB session ---
+# --- Add backend/ to sys.path so we can import models & DB session ---
 import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -76,6 +76,15 @@ PERSONA_WEIGHTS = {
 }
 
 def parse_args() -> argparse.Namespace:
+    """
+    Parse command-line arguments.
+
+    Returns:
+        argparse.Namespace with:
+            customers (int): number of customers to create (min 50 by logic).
+            reset (bool):    if True, drop & recreate tables before seeding.
+            seed (int|None): RNG/Faker seed for reproducibility.
+    """
     p = argparse.ArgumentParser(description="Seed Postgres with realistic CORRELATED data.")
     p.add_argument("--customers", type=int, default=60)
     p.add_argument("--reset", action="store_true")
@@ -83,22 +92,39 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 def reset_db() -> None:
+    """Drop all tables and recreate them. **Destructive**; use for clean reseeds."""
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 def ensure_tables() -> None:
+    """Create tables if they do not exist (idempotent)."""
     Base.metadata.create_all(bind=engine)
 
 def daterange_days(days_back: int) -> List[datetime]:
+    """
+    Build a list of day timestamps from (now - days_back) → now.
+
+    Example:
+        daterange_days(2) -> [T-2d, T-1d, T]
+    """
     now = datetime.utcnow()
     return [now - timedelta(days=i) for i in range(days_back, -1, -1)]
 
 def rnd_dt_in_day(day: datetime) -> datetime:
+    """
+    Pick a random timestamp within a given day (07:00–21:59 to avoid midnight-heavy spikes).
+    """
     return day.replace(
         hour=random.randint(7, 21), minute=random.randint(0, 59), second=random.randint(0, 59)
     )
 
 def new_customer() -> Customer:
+    """
+    Create a new Customer with a random segment and reasonable created_at.
+
+    Returns:
+        Customer.
+    """
     seg = random.choices(SEGMENTS, weights=[0.35, 0.45, 0.20], k=1)[0]
     return Customer(
         name=fake.company(),
@@ -108,10 +134,22 @@ def new_customer() -> Customer:
     )
 
 def choose_persona(segment: str) -> Tuple[str, Persona]:
+    """
+    Pick a health persona label and Persona object for the given segment.
+
+    Returns:
+        (label, persona): e.g., ("at_risk", PERSONAS["SMB"]["at_risk"])
+    """
     label = random.choices(["healthy", "at_risk", "churn_risk"], weights=PERSONA_WEIGHTS[segment], k=1)[0]
     return label, PERSONAS[segment][label]
 
 def seed_customers(session, count: int) -> list:
+    """
+    Persist `count` new customers and return the list.
+
+    Commits:
+        Inserts all customers in one transaction.
+    """
     customers = [new_customer() for _ in range(count)]
     session.add_all(customers)
     session.commit()
@@ -180,6 +218,12 @@ def seed_logins_and_api_calls(session, customer_id: int, persona: Persona) -> No
         session.commit()
 
 def seed_feature_usage(session, customer_id: int, persona: Persona) -> None:
+    """
+    Emit feature usage rows over the last 90 days.
+
+    - Distinct features used is drawn from persona.features_used_90.
+    - Each chosen feature gets 2–8 usage stamps at random days.
+    """
     distinct = _sample_int(persona.features_used_90)
     if distinct <= 0:
         return
@@ -194,6 +238,12 @@ def seed_feature_usage(session, customer_id: int, persona: Persona) -> None:
         session.commit()
 
 def seed_support_tickets(session, customer_id: int, persona: Persona) -> None:
+    """
+    Create support tickets over the last 90 days.
+
+    - Ticket count drawn from persona.tickets_90.
+    - Status is sampled with a bias towards 'closed' (70%).
+    """
     count = _sample_int(persona.tickets_90)
     rows: List[SupportTicket] = []
     for _ in range(count):
@@ -225,6 +275,23 @@ def seed_invoices(session, customer_id: int, persona: Persona) -> None:
         session.commit()
 
 def main() -> None:
+    """
+    Orchestrate seeding end-to-end based on CLI flags.
+
+    Steps:
+      1) Optional RNG seeding for reproducibility.
+      2) Reset or ensure tables exist.
+      3) Skip if DB already populated (unless --reset).
+      4) Create customers, then generate:
+         - 90d events (logins, API with trend),
+         - feature usage,
+         - support tickets,
+         - ~4 invoice cycles/customer.
+      5) Print a concise summary.
+
+    Exit codes:
+      - Always 0 on success. Raises on critical failures (e.g., no Faker).
+    """
     args = parse_args()
     if args.seed is not None:
         random.seed(args.seed); Faker.seed(args.seed)

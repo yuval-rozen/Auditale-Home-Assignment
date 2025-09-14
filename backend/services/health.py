@@ -36,26 +36,31 @@ def score_login_frequency(logins_30d: int, target: int = 12) -> float:
     return _pct(min(1.0, logins_30d / max(1, target)))
 
 def score_feature_adoption(distinct_features_used_90d: int, total_features: int = TOTAL_KEY_FEATURES) -> float:
+    """Score feature breadth: distinct features used in 90d / total features."""
     if total_features <= 0:
         return 50.0
     return _pct(distinct_features_used_90d / float(total_features))
 
 def score_support_load(tickets_90d: int, max_tickets: int = 10) -> float:
+    """Score support friction: fewer tickets in 90d → higher score."""
     x = 1.0 - min(1.0, tickets_90d / max_tickets)
     return _pct(x)
 
 def score_invoice_timeliness_counts(on_time_invoices: int, total_invoices: int, neutral_if_no_history: bool = True) -> float:
+    """Score based on on-time invoice ratio; neutral (50) if no history (optional)."""
     if total_invoices <= 0:
         return 50.0 if neutral_if_no_history else 0.0
     return _pct(on_time_invoices / float(total_invoices))
 
 def score_api_trend(curr_30d: int, prev_30d: int, smoothing: int = 3) -> float:
+    """Score API momentum: compare current vs previous 30d (50 = flat)."""
     num = curr_30d + smoothing
     den = max(1, prev_30d + smoothing)
     ratio = num / den
     return round(50.0 + 50.0 * (ratio - 1.0) / (ratio + 1.0), 2)
 
 def weighted_score(factors_0_100: Dict[str, float]) -> float:
+    """Combine factor scores (0–100) using WEIGHTS to produce a final score."""
     total = 0.0
     for name, w in WEIGHTS.items():
         total += w * factors_0_100.get(name, 0.0)

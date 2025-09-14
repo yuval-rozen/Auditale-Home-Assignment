@@ -301,7 +301,7 @@
       <div class="step">
         <div class="num" aria-hidden="true">1</div>
         <h3>Ingest events</h3>
-        <p>Pull logins, API calls, tickets, and invoices into Postgres (batch or streaming).</p>
+        <p>Pull logins, API calls, tickets, and invoices into Postgres.</p>
       </div>
       <div class="step">
         <div class="num" aria-hidden="true">2</div>
@@ -311,7 +311,7 @@
       <div class="step">
         <div class="num" aria-hidden="true">3</div>
         <h3>Act on risks</h3>
-        <p>Alert CSMs, trigger playbooks, or sync the score into your CRM via jobs or webhooks.</p>
+        <p>Alert CSMs, trigger playbooks, or sync the score into your CRM.</p>
       </div>
     </div>
   </section>
@@ -327,7 +327,7 @@
           <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           How is the health score calculated?
         </summary>
-        <p id="q1">We combine engagement recency, feature coverage, ticket volume, and invoice timeliness with weights you can tune. Missing data is treated neutrally.</p>
+        <p id="q1">We combine engagement recency, feature coverage, ticket volume, and invoice timeliness with weights we can tune on your demand. Missing data is treated neutrally.</p>
       </details>
 
       <details role="listitem">
@@ -341,17 +341,17 @@
       <details role="listitem">
         <summary aria-controls="q3" aria-expanded="false">
           <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          Can I export the data?
+          Can I see why a customer’s score changed?
         </summary>
-        <p id="q3">Yes. Use the API to pipe scores into your CRM or BI tool when your reverse proxy exposes the documentation at <code>/docs</code>.</p>
+        <p id="q3">Yes. In the detail view, each factor is displayed separately. For example, if logins dropped in the last 30 days, you’ll see the Login Score decrease, which lowers the overall Health Score.</p>
       </details>
 
       <details role="listitem">
         <summary aria-controls="q4" aria-expanded="false">
           <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          What happens if invoices are missing?
+          How do I find a specific customer in the dashboard?
         </summary>
-        <p id="q4">No penalty — we treat missing factors as neutral so new trials aren’t unfairly downgraded.</p>
+        <p id="q4">Use the search bar at the top of the dashboard. Type the customer’s name (or part of it), and the table will filter automatically to show only matching customers.</p>
       </details>
     </div>
   </section>
