@@ -1,0 +1,41 @@
+C:\Users\yuval\customer-health-app>
+¦   docker-compose.yml
+¦   package.json
+¦   pytest.ini
+¦          
++---docs
+¦   ¦   README.md
+¦   ¦   Health_Score_Methodology.md
+¦   ¦   Architecture.md
+¦   ¦   Sample_Api_Responses.md
+¦   ¦   AI_Collaboration_Evidence.md
+¦          
++---backend
+¦   ¦   db.py
+¦   ¦   Dockerfile
+¦   ¦   entrypoint.sh
+¦   ¦   main.py
+¦   ¦   models.py
+¦   ¦   requirements.txt
+¦   ¦   schemas.py
+¦   ¦   __init__.py
+¦   ¦   
+¦   +---services
+¦   ¦   ¦   health.py
+¦   ¦   ¦               
+¦   +---tests
+¦   ¦   ¦   conftest.py
+¦   ¦   ¦   test_api_integration.py
+¦   ¦   ¦   test_health_unit.py
+¦   ¦   ¦                           
++---db
+¦    ¦  seed.py
+¦    ¦          
++---frontend
+    ¦   dashboard.html
+    ¦   Dockerfile
+    ¦   home.html
+    ¦   nginx.conf
+    ¦   
+    +---assets
+            home-hero.jpg

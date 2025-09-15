@@ -1,56 +1,138 @@
-### Sample Data
-- Seeded once via `python db/seed.py --customers 80 --seed 42`
-- Deterministic: using a fixed seed ensures the same dataset on every machine
-- Idempotent: script checks if customers already exist and exits to avoid duplicates
-- Content:
-    - 80 customers across segments (enterprise, SMB, startup)
-    - ~90 days of events (login, api_call), feature usage, support tickets
-    - 3 monthly invoices with on-time and late payments
+# Customer Health App
 
-### Health Score Methodology
-The Customer Health Score is designed to capture early signals of engagement, satisfaction, and risk. It combines multiple usage and financial factors into a single, weighted score from 0–100, which we bucket into:
-- Healthy: 75–100
-- At-risk: 50–74
-- Churn-risk: <50
-- This provides an at-a-glance view of customer stability and allows teams to proactively intervene before churn occurs.
+## Introduction
 
-Factors and Measurement
-1. Login Frequency (25%)
-- Why it matters: Consistent logins indicate customers are actively engaging with the product. Sudden drops in logins are strong predictors of churn.
-- How measured: Count of logins in the last 30 days, normalized against a target of 20 logins (≈ daily activity).
-- Why 30 days: A short-term window highlights recent engagement, not legacy activity.
+The **Customer Health App** is a demo SaaS application that simulates customer activity and calculates a **Customer Health Score**.
 
-2. Feature Adoption Rate (25%)
-- Why it matters: Customers who adopt multiple “key features” become more “sticky,” as they rely on more parts of the product. Low adoption suggests limited perceived value.
-- How measured: Distinct features used in the last 90 days ÷ total key features (5 in this model).
-- Why 90 days: Feature adoption unfolds over weeks/months, not days.
+It demonstrates:
+- Synthetic but **realistic customer data generation** (`db/seed.py`).
+- **Health scoring methodology** based on engagement, adoption, support, billing, and usage trends.
+- **Full-stack architecture**:
+  - **Frontend**: Nginx serving static HTML dashboards.
+  - **Backend**: FastAPI service exposing APIs for ingest and health scoring.
+  - **Database**: PostgreSQL, seeded with correlated customer behaviors.
+- **Containerized deployment** with Docker Compose.
 
-3. Support Ticket Volume (20%)
-- Why it matters: Excessive tickets suggest friction or dissatisfaction, even if customers are engaged. Fewer tickets generally imply smoother experience.
-- How measured: Inverse of ticket count over the last 90 days (fewer tickets → higher score).
-- Why 90 days: A quarter-long window smooths out random spikes in activity.
+---
 
-4. Invoice Payment Timeliness (20%)
-- Why it matters: Late or missed payments are strong financial churn signals, even if usage is high.
-- How measured: % of invoices paid on or before the due date in the last 3 billing cycles.
-- Special case: If no billing history exists yet, we treat the score as neutral (50), not 0. This avoids unfairly penalizing new customers with no invoices.
-- Why this approach: No history ≠ bad history. Only actual late payments should drag scores down.
+## Prerequisites
 
-5. API Usage Trends (10%)
-- Why it matters: For integrated customers, stable or increasing API calls show deeper reliance on the platform. A decline signals disengagement.
-- How measured: Compare API calls in the last 30 days vs. the previous 30.
-Growth → >50
-Decline → <50
-No change → 50
-- Why 30 days: API activity can shift quickly when integrations break or workloads change.
+You will need:
 
-Weighting Rationale
-Engagement (login frequency) and adoption (feature breadth) are weighted highest (25% each) because they are the strongest predictors of retention.
-Support load and billing reliability matter strongly but are secondary signals (20% each).
-API usage trends are weighted lowest (10%) because not all segments (e.g., SMBs) rely on APIs, but when present, it’s a valuable indicator.
+- **Python 3.10+** (for local testing)
+- **Docker & Docker Compose** (for running services)
+- **PostgreSQL 14+** (used in production; local dev uses Dockerized Postgres)
+
+Dependencies are defined in [`requirements.txt`](requirements.txt).
+
+---
+
+## Setup Instructions
+
+## Installation
+
+### Clone the Repository
+```bash
+git clone https://github.com/yuval-rozen/Auditale-Home-Assignment.git
+cd Auditale-Home-Assignment
+```
+
+## Configuration
+
+- **Environment Variables:**  
+  The backend expects `DATABASE_URL` in the form:
+  ```
+  postgres://user:password@db:5432/customer_health
+  ```
+- All these defaults are set in `docker-compose.yml`.
+- Secrets and DB credentials should be provided via a `.env` file or environment variables.
+
+---
+
+## Deployment Guide (Production)
+
+1. **Build and start containers**:
+   ```bash
+   docker compose up --build
+   ```
+
+2. **Wait for services**:  
+   The `entrypoint.sh` script waits for Postgres, runs migrations & seeding (`db/seed.py`), then starts FastAPI.
+
+3. **Access the app**:
+  - Frontend: [http://localhost:8080/home.html](http://localhost:8080/home.html)
+  - Dashboard: [http://localhost:8080/dashboard.html](http://localhost:8080/dashboard.html)
+  - API Docs: [http://localhost:8080/docs](http://localhost:8080/docs)
+
+4. **Seed Data**: By default, ~80 customers are generated with realistic personas, 90 days of events, and invoices.
+
+---
+
+### Install Python Dependencies (optional, for running backend locally)
+```bash
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
+```
+
+---
+
+## Usage
+
+### Example: Get All Customers
+```bash
+curl http://localhost:8080/api/customers
+```
+
+### Example: Get Health Score for a Customer
+```bash
+curl http://localhost:8080/api/customers/1/health
+```
+
+The response includes factors and final score.
+
+---
+
+## Project Structure
+
+Is detailed on `Arcitecture.md`
+
+---
+
+## Tests
+Run the test suite using the npm script:
+```bash
+npm test
+```
+- With coverage and thresholds (`pytest.ini` enforces 80% coverage):
+  ```
+- Tests use **SQLite** (file-backed) for isolation (`conftest.py`).
+
+---
+
+## Troubleshooting
+
+- **Database fails to start**: Ensure no leftover volume from a different Postgres version. Remove with:
+  ```bash
+  docker volume ls
+  ```
+- look for anything named like Auditale-Home-Assignment* or pgdata and remove if needed: docker volume rm <the_volume_name>
+- **Port conflicts**: Check if ports `8080` (frontend) or `5432` (Postgres) are in use.
+- **Tests failing**: Ensure virtualenv is active and dependencies installed.
+
+---
 
 ## Support
 
-For any issues please contact us via [mail](queenb.community@gmail.com) or open an issue.
+For any issues please contact me via [mail](yuval99.yr@gmail.com).
 
-**Happy Coding! :)**
+**Have A Nice Day! :)**
+
+
+## Acknowledgements
+
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Docker](https://www.docker.com/)
+- [Faker](https://faker.readthedocs.io/en/master/) for data generation. 
+
